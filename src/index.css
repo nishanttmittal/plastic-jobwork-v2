@@ -1,11 +1,36 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@500;600&display=swap');
+
+/* Machined Instrument design tokens (Tailwind v4 @theme → utility classes:
+   bg-graphite, text-chrome, text-amber, border-hairline, font-mono, font-display…) */
+@theme {
+  --color-graphite: #0E1217;
+  --color-steel: #161D26;
+  --color-hairline: #2A323D;
+  --color-chrome: #E8EDF2;
+  --color-muted: #8A95A3;
+  --color-amber: #FF9F45;
+  --color-signal-green: #3FB984;
+  --color-signal-red: #FF5C5C;
+  --font-display: "Space Grotesk", system-ui, sans-serif;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
 
 * { box-sizing: border-box; }
-body { margin: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+:root { color-scheme: dark; }
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: var(--color-graphite);
+  color: var(--color-chrome);
+  -webkit-font-smoothing: antialiased;
+}
+.tnum { font-variant-numeric: tabular-nums; }
 
 @media print {
   .no-print { display: none !important; }
-  body { background: white !important; }
+  body { background: white !important; color: black !important; }
   @page { margin: 12mm; size: A4; }
 }
 
