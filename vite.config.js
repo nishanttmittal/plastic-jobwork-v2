@@ -16,22 +16,22 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: false, // we register manually in main.jsx to add periodic update checks
-      scope: '/plastic-jobwork/',
+      scope: '/plastic-jobwork-v2/',
       includeAssets: ['apple-touch-icon.png'],
       workbox: {
-        navigateFallback: '/plastic-jobwork/index.html',
-        navigateFallbackAllowlist: [/^\/plastic-jobwork/],
+        navigateFallback: '/plastic-jobwork-v2/index.html',
+        navigateFallbackAllowlist: [/^\/plastic-jobwork-v2/],
       },
       manifest: {
         name: 'Plastic Job Work',
         short_name: 'Plastic',
         description: 'Plastic moulding job work — production, cost per piece, material reconciliation & molder hisab',
-        theme_color: '#0f766e',
-        background_color: '#f1f5f9',
+        theme_color: '#0E1217',
+        background_color: '#0E1217',
         display: 'standalone',
         orientation: 'portrait',
-        start_url: '/plastic-jobwork/',
-        scope: '/plastic-jobwork/',
+        start_url: '/plastic-jobwork-v2/',
+        scope: '/plastic-jobwork-v2/',
         icons: [
           { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
           { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },

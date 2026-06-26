@@ -18,8 +18,13 @@ function Console({ module, role, onSwitch, userEmail }) {
   const isSecondary = active && !active.nav
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-24">
-      {isSecondary && <NavBar title={active.title} back="More" onHome={() => setActiveKey('more')} />}
+    <div className="min-h-screen bg-graphite text-chrome pb-24">
+      <header className="sticky top-0 z-20 flex items-center gap-2 border-b border-hairline bg-graphite/90 px-4 py-2.5 backdrop-blur no-print"
+        style={{ paddingTop: 'calc(0.625rem + env(safe-area-inset-top))' }}>
+        <img src={`${import.meta.env.BASE_URL}logo.png`} alt="UNICO" className="h-6 w-auto" />
+        <span className="font-display text-sm font-semibold tracking-wide text-chrome">{module.title}</span>
+      </header>
+      {isSecondary && <NavBar title={active.title} back="Settings" onHome={() => setActiveKey('more')} />}
       {active && (
         <active.Component
           role={role} owner={role === 'owner'}
@@ -29,13 +34,13 @@ function Console({ module, role, onSwitch, userEmail }) {
       )}
 
       {/* Bottom nav — the four daily jobs + More */}
-      <nav className="fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 flex no-print z-30"
+      <nav className="fixed bottom-0 inset-x-0 bg-steel border-t border-hairline flex no-print z-30"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         {navPages.map(p => {
           const on = active?.key === p.key || (isSecondary && p.key === 'more')
           return (
             <button key={p.key} onClick={() => setActiveKey(p.key)}
-              className={`flex-1 flex flex-col items-center pt-2 pb-1.5 ${on ? 'text-teal-700' : 'text-slate-400'}`}>
+              className={`flex-1 flex flex-col items-center pt-2 pb-1.5 ${on ? 'text-amber' : 'text-muted'}`}>
               <span className="text-xl leading-none">{p.icon}</span>
               <span className="mt-0.5 text-[11px] font-semibold">{p.title}</span>
             </button>
