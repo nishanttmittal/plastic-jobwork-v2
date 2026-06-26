@@ -17,7 +17,7 @@
  */
 import { initializeApp, getApp } from 'firebase/app'
 import {
-  initializeFirestore,
+  initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
   collection, doc, getDoc, runTransaction,
 } from 'firebase/firestore'
 import {
@@ -34,16 +34,21 @@ let auth = null
 
 if (isFirebaseConfigured) {
   app = initializeApp(firebaseConfig)
-  // Offline-first: IndexedDB cache, shared across tabs. Reads/writes work with
-  // no network and sync automatically when back online (requirement: offline).
-  // In-memory cache + auto long-polling. Firestore's IndexedDB persistence
-  // hangs on Safari/iOS in some environments, so we use the reliable memory
-  // cache (data still loads instantly online; the app needs a connection to
-  // create challans anyway, for server-issued unique numbers). Long-polling
-  // auto-detect makes the connection work on Safari and restrictive networks.
-  db = initializeFirestore(app, {
-    experimentalAutoDetectLongPolling: true,
-  })
+  // Instant open: persistent IndexedDB cache (shared across tabs) so onSnapshot
+  // serves cached data on the very first paint, then syncs from the server in
+  // the background — the app opens immediately instead of waiting on a cold
+  // network round-trip. Long-polling auto-detect keeps it working on Safari and
+  // restrictive networks. If a device rejects IndexedDB persistence (some iOS
+  // setups), fall back to the memory cache so the app still works — no worse
+  // than before.
+  try {
+    db = initializeFirestore(app, {
+      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+      experimentalAutoDetectLongPolling: true,
+    })
+  } catch {
+    db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true })
+  }
   auth = getAuth(app)
 }
 

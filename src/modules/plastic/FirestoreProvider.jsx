@@ -130,31 +130,17 @@ export function FirestoreProvider({ children }) {
 
   const peekNextEntryNo = useCallback(() => formatEntryNo((counter || 0) + 1), [counter])
 
-  if (!ready && timedOut) {
-    return (
-      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white gap-4 p-6 text-center">
-        <div className="text-4xl">📡</div>
-        <div className="text-base font-bold">Can't reach the cloud</div>
-        <div className="text-sm text-slate-300 max-w-xs">Check your internet. If it persists, the app's web address may need authorising in Firebase.</div>
-        <button onClick={() => window.location.reload()} className="mt-2 bg-white text-slate-900 rounded-xl px-6 py-3 font-bold text-sm">Retry</button>
-      </div>
-    )
-  }
-  if (!ready) {
-    return (
-      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white gap-3">
-        <div className="text-2xl">☁️</div><div className="text-sm text-slate-300">Connecting to cloud…</div>
-      </div>
-    )
-  }
-
+  // Render the app shell IMMEDIATELY — never a full-screen "Connecting…" gate.
+  // With the persistent cache, cached data paints on first frame; the shell can
+  // surface `cloud.syncing` (cold first load) or `cloud.timedOut` (can't reach
+  // the cloud) as a thin, non-blocking banner instead of taking over the screen.
   const value = {
     production: productionApi, issues: issuesApi, returns: returnsApi, purchases: purchasesApi, payments: paymentsApi, logs: logsApi, users: usersApi,
     compounds, setCompounds, masterbatch, setMasterbatch, inserts, setInserts,
     molders, setMolders, products, setProducts,
     lotLocks, setLotLocks,
     masters, createEntry, peekNextEntryNo, log,
-    cloud: { enabled: true, connected: !error, error },
+    cloud: { enabled: true, connected: !error, error, syncing: !ready, timedOut },
   }
   return <PlasticCtx.Provider value={value}>{children}</PlasticCtx.Provider>
 }
