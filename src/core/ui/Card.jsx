@@ -1,7 +1,7 @@
-/** Card — standard white surface used throughout the app. */
+/** Card — steel surface used throughout the app (Machined Instrument theme). */
 export default function Card({ className = '', children, ...props }) {
   return (
-    <div className={`bg-white rounded-2xl shadow-sm ${className}`} {...props}>
+    <div className={`bg-steel border border-hairline rounded-2xl ${className}`} {...props}>
       {children}
     </div>
   )
@@ -10,7 +10,7 @@ export default function Card({ className = '', children, ...props }) {
 /** Small uppercase section label, used above fields. */
 export function FieldLabel({ children, className = '' }) {
   return (
-    <span className={`text-sm font-bold text-slate-500 uppercase tracking-wide ${className}`}>
+    <span className={`text-sm font-bold text-muted uppercase tracking-wide ${className}`}>
       {children}
     </span>
   )

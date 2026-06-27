@@ -63,7 +63,7 @@ export default function ReturnMaterial() {
     <div className="max-w-lg mx-auto p-4 space-y-4">
       <Toast msg={msg} />
 
-      <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800">
+      <div className="bg-amber/10 border border-amber/30 rounded-xl px-4 py-3 text-sm text-amber">
         Record material the molder <b>hands back</b> (unused compound, loose regrind, leftover nuts).
         This reduces what's shown as “lying with the molder”.
       </div>
@@ -88,11 +88,11 @@ export default function ReturnMaterial() {
         <FieldLabel>Compound returned (unused)</FieldLabel>
         <Select options={compoundOpts} value={compoundId} onChange={e => setCompoundId(e.target.value)} />
         <div>
-          <span className="text-xs text-slate-500">Compound weight (kg)</span>
+          <span className="text-xs text-muted">Compound weight (kg)</span>
           <NumberInput value={compoundKg} onChange={e => setCompoundKg(e.target.value)} placeholder="0" className="mt-1" />
         </div>
         <div>
-          <span className="text-xs text-slate-500">Regrind / runner returned (kg)</span>
+          <span className="text-xs text-muted">Regrind / runner returned (kg)</span>
           <NumberInput value={regrindKg} onChange={e => setRegrindKg(e.target.value)} placeholder="0" className="mt-1" />
         </div>
       </Card>
@@ -102,10 +102,10 @@ export default function ReturnMaterial() {
         <Select options={nutOpts} value={insertId} onChange={e => setInsertId(e.target.value)} />
         {insertId && (
           <div>
-            <span className="text-xs font-semibold text-red-600">Nuts — weight (kg) · required when nuts come back *</span>
+            <span className="text-xs font-semibold text-signal-red">Nuts — weight (kg) · required when nuts come back *</span>
             <NumberInput value={nutKg} onChange={e => setNutKg(e.target.value)} placeholder="0" className="mt-1" />
             {derivedNutQty > 0 && (
-              <div className="mt-1 bg-teal-50 text-teal-800 rounded-xl px-3 py-2 text-sm font-semibold">
+              <div className="mt-1 bg-graphite border border-hairline text-chrome rounded-xl px-3 py-2 text-sm font-semibold">
                 ≈ <b>{fmtNum(derivedNutQty)}</b> nuts (at {fmtNum(nutWeightG)} g each)
               </div>
             )}
@@ -114,21 +114,21 @@ export default function ReturnMaterial() {
       </Card>
 
       {bal && (
-        <Card className="p-4 bg-slate-50">
+        <Card className="p-4 !bg-graphite">
           <FieldLabel>Currently with this molder</FieldLabel>
           <div className="mt-2 flex justify-between text-sm">
-            <span className="text-slate-600">Compound balance</span>
-            <span className="font-mono font-bold">{fmtNum(bal.balanceKg)} kg</span>
+            <span className="text-muted">Compound balance</span>
+            <span className="font-mono font-bold text-chrome">{fmtNum(bal.balanceKg)} kg</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-slate-600">Nuts balance</span>
-            <span className="font-mono font-bold">{fmtNum(bal.nutBalance)}</span>
+            <span className="text-muted">Nuts balance</span>
+            <span className="font-mono font-bold text-chrome">{fmtNum(bal.nutBalance)}</span>
           </div>
         </Card>
       )}
 
       <textarea value={note} onChange={e => setNote(e.target.value)} placeholder="Note (optional)"
-        className="w-full border-2 border-slate-200 rounded-2xl px-4 py-3 text-base" rows={2} />
+        className="w-full border-2 border-hairline rounded-2xl px-4 py-3 text-base text-chrome bg-graphite placeholder:text-muted focus:outline-none focus:ring-4 focus:ring-amber/30 focus:border-amber" rows={2} />
 
       <Button variant="success" size="lg" className="w-full" disabled={!canSave} onClick={save}>
         Record Return

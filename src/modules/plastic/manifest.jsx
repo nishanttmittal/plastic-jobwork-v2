@@ -15,6 +15,7 @@ import { PlasticProvider } from './PlasticContext'
 import Placeholder from './pages/_Placeholder'
 import Settings from './pages/Settings'
 import Home from './pages/Home'
+import Record from './pages/Record'
 
 const ph = (title) => function PagePlaceholder(props) { return <Placeholder title={title} {...props} /> }
 
@@ -27,7 +28,7 @@ export const plasticModule = {
     // Primary bottom nav. Home is first so OWNER lands on Home; MANAGER (no Home)
     // lands on Record. Material is manager-only.
     { key: 'home',     title: 'Home',     icon: '🏠', nav: true, roles: ['owner'], Component: Home },
-    { key: 'record',   title: 'Record',   icon: '➕', nav: true, roles: ['manager', 'owner'], Component: ph('Record') },
+    { key: 'record',   title: 'Record',   icon: '➕', nav: true, roles: ['manager', 'owner'], Component: Record },
     { key: 'jobs',     title: 'Jobs',     icon: '👥', nav: true, roles: ['owner'], Component: ph('Jobs') },
     { key: 'costing',  title: 'Costing',  icon: '🏷️', nav: true, roles: ['owner'], Component: ph('Costing') },
     { key: 'material', title: 'Material', icon: '📦', nav: true, roles: ['manager'], Component: ph('Material') },

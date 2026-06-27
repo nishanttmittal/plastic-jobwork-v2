@@ -139,7 +139,7 @@ export default function NewProduction({ owner }) {
           <div className="flex gap-2 mt-1">
             {[['time', '⏱️ Time'], ['piece', '🔢 Per piece']].map(([m, lbl]) => (
               <button key={m} type="button" onClick={() => setPayMode(m)}
-                className={`flex-1 rounded-xl py-2 text-sm font-semibold border-2 ${effectiveMode === m ? 'border-teal-500 bg-teal-50 text-teal-700' : 'border-slate-200 text-slate-400'}`}>{lbl}</button>
+                className={`flex-1 rounded-xl py-2 text-sm font-semibold border-2 ${effectiveMode === m ? 'border-amber bg-amber/10 text-amber' : 'border-hairline text-muted'}`}>{lbl}</button>
             ))}
           </div>
         </div>
@@ -160,9 +160,9 @@ export default function NewProduction({ owner }) {
                 if (!(hrs > 0 && rate > 0)) return null
                 const amt = jobWorkTotal({ hours: hrs }, molder)
                 return (
-                  <div className="mt-1 bg-teal-50 text-teal-800 rounded-xl px-3 py-2 text-sm font-semibold">
-                    💰 Payable: {fmtNum(hrs)} hrs ÷ 12 × ₹{fmtNum(rate)} = <b>₹{fmtNum(amt)}</b>
-                    <span className="font-normal text-teal-600"> ({(hrs / 12).toFixed(2)} shifts)</span>
+                  <div className="mt-1 bg-graphite border border-hairline text-chrome rounded-xl px-3 py-2 text-sm font-semibold">
+                    💰 Payable: {fmtNum(hrs)} hrs ÷ 12 × ₹{fmtNum(rate)} = <b className="text-amber">₹{fmtNum(amt)}</b>
+                    <span className="font-normal text-muted"> ({(hrs / 12).toFixed(2)} shifts)</span>
                   </div>
                 )
               })()}
@@ -177,30 +177,30 @@ export default function NewProduction({ owner }) {
               const molder = byId(molders, molderId)
               const rate = Number(pieceRate) > 0 ? Number(pieceRate) : (Number(molder?.pieceRate) || 0)
               if (rate <= 0) return (
-                <div className="mt-1 bg-red-50 text-red-700 rounded-xl px-3 py-2 text-sm font-semibold">
+                <div className="mt-1 bg-signal-red/10 text-signal-red rounded-xl px-3 py-2 text-sm font-semibold">
                   ⚠️ Piece rate is ₹0 — set a rate here or in Masters, else pay = ₹0.
                 </div>
               )
               if (totalPieces <= 0) return null
               return (
-                <div className="mt-1 bg-teal-50 text-teal-800 rounded-xl px-3 py-2 text-sm font-semibold">
-                  💰 Payable: {fmtNum(totalPieces)} pcs × ₹{fmtNum(rate)} = <b>₹{fmtNum(jobWorkTotal(draft, molder))}</b>
+                <div className="mt-1 bg-graphite border border-hairline text-chrome rounded-xl px-3 py-2 text-sm font-semibold">
+                  💰 Payable: {fmtNum(totalPieces)} pcs × ₹{fmtNum(rate)} = <b className="text-amber">₹{fmtNum(jobWorkTotal(draft, molder))}</b>
                 </div>
               )
             })()}
           </div>
         )}
         {!payMode && (
-          <div className="text-[11px] text-slate-400 -mt-1">Using moulder default ({effectiveMode === 'piece' ? 'per piece' : 'time'}). Tap above to override.</div>
+          <div className="text-[11px] text-muted -mt-1">Using moulder default ({effectiveMode === 'piece' ? 'per piece' : 'time'}). Tap above to override.</div>
         )}
         {isLotFinalized(lotNo, lotLocks) && (
-          <div className="bg-amber-50 text-amber-800 rounded-xl px-3 py-2 text-sm font-semibold">🔒 {lotNo} is finalized — reopen it in Lot Report to add entries.</div>
+          <div className="bg-amber/10 text-amber rounded-xl px-3 py-2 text-sm font-semibold">🔒 {lotNo} is finalized — reopen it in Lot Report to add entries.</div>
         )}
         <div>
           <FieldLabel>Machine shots (from machine screen)</FieldLabel>
           <NumberInput value={machineShots} onChange={e => setMachineShots(e.target.value)} placeholder="0" className="mt-1" />
           {shotCheck && (
-            <div className={`mt-1 text-sm rounded-xl px-3 py-2 ${shotCheck.off ? 'bg-amber-50 text-amber-800' : 'bg-emerald-50 text-emerald-700'}`}>
+            <div className={`mt-1 text-sm rounded-xl px-3 py-2 ${shotCheck.off ? 'bg-amber/10 text-amber' : 'bg-signal-green/10 text-signal-green'}`}>
               {shotCheck.off ? '⚠️' : '✓'} {fmtNum(shotCheck.shots)} shots × {shotCheck.cavities} = <b>{fmtNum(shotCheck.expected)}</b> pcs from machine
               {' '}vs {fmtNum(shotCheck.made)} entered{shotCheck.off ? ` — ${shotCheck.expected > shotCheck.made ? 'short by ' + fmtNum(shotCheck.expected - shotCheck.made) : 'over by ' + fmtNum(shotCheck.made - shotCheck.expected)}` : ' ✓ match'}
             </div>
@@ -210,7 +210,7 @@ export default function NewProduction({ owner }) {
             if (!eff) return null
             const slow = eff.pct != null && eff.pct < 85
             return (
-              <div className={`mt-1 text-sm rounded-xl px-3 py-2 ${slow ? 'bg-amber-50 text-amber-800' : 'bg-slate-50 text-slate-600'}`}>
+              <div className={`mt-1 text-sm rounded-xl px-3 py-2 ${slow ? 'bg-amber/10 text-amber' : 'bg-graphite text-muted'}`}>
                 ⚙️ {fmtNum(eff.actualPerHr)} shots/hr{eff.targetPerHr > 0 && <> (target {fmtNum(eff.targetPerHr)})</>}
                 {eff.pct != null && <> — <b>{fmtNum(eff.pct)}%</b> efficiency</>}
                 {slow && <> · {fmtNum(eff.idleHours)} hr idle ≈ ₹{fmtNum(eff.idleHours * ((Number(byId(molders, molderId)?.shiftRate) || 0) / 12))} 🐢</>}
@@ -225,7 +225,7 @@ export default function NewProduction({ owner }) {
           <div className="flex items-center justify-between">
             <FieldLabel>Product {i + 1}</FieldLabel>
             {items.length > 1 && (
-              <button onClick={() => removeItem(i)} className="text-red-500 text-sm font-bold">Remove</button>
+              <button onClick={() => removeItem(i)} className="text-signal-red text-sm font-bold">Remove</button>
             )}
           </div>
           <Select options={productOpts} value={it.productId} onChange={e => setItem(i, { productId: e.target.value })} />
@@ -237,7 +237,7 @@ export default function NewProduction({ owner }) {
             <div className="flex items-center justify-between">
               <FieldLabel className="text-xs">Rejects by reason (QC, scrap)</FieldLabel>
               {rowsTotal(it.rejectRows) > 0 && (
-                <span className="text-xs font-semibold text-slate-500">total {fmtNum(rowsTotal(it.rejectRows))}</span>
+                <span className="text-xs font-semibold text-muted">total {fmtNum(rowsTotal(it.rejectRows))}</span>
               )}
             </div>
             {(it.rejectRows || []).map((r, k) => (
@@ -254,10 +254,10 @@ export default function NewProduction({ owner }) {
                   placeholder="qty"
                   onChange={e => setRejectRow(i, k, { qty: e.target.value })}
                 />
-                <button onClick={() => removeRejectRow(i, k)} className="text-red-500 font-bold px-2 text-lg">✕</button>
+                <button onClick={() => removeRejectRow(i, k)} className="text-signal-red font-bold px-2 text-lg">✕</button>
               </div>
             ))}
-            <button onClick={() => addRejectRow(i)} className="text-teal-600 text-sm font-semibold mt-2">＋ Add reject reason</button>
+            <button onClick={() => addRejectRow(i)} className="text-amber text-sm font-semibold mt-2">＋ Add reject reason</button>
           </div>
         </Card>
       ))}
@@ -267,24 +267,24 @@ export default function NewProduction({ owner }) {
         <FieldLabel>Material returned / lost (kg)</FieldLabel>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <span className="text-xs text-slate-500">Runner returned</span>
+            <span className="text-xs text-muted">Runner returned</span>
             <NumberInput value={runnerKg} onChange={e => setRunnerKg(e.target.value)} placeholder="0" />
           </div>
           <div>
-            <span className="text-xs text-slate-500">Rejects returned</span>
+            <span className="text-xs text-muted">Rejects returned</span>
             <NumberInput value={rejectsKg} onChange={e => setRejectsKg(e.target.value)} placeholder="0" />
           </div>
           <div>
-            <span className="text-xs text-slate-500">Burnt / purge (my loss)</span>
+            <span className="text-xs text-muted">Burnt / purge (my loss)</span>
             <NumberInput value={burntKg} onChange={e => setBurntKg(e.target.value)} placeholder="0" />
           </div>
           <div>
-            <span className="text-xs font-semibold text-red-600">Incoming by weight (kg) — required *</span>
+            <span className="text-xs font-semibold text-signal-red">Incoming by weight (kg) — required *</span>
             <NumberInput value={finishedKg} onChange={e => setFinishedKg(e.target.value)} placeholder="0" />
           </div>
         </div>
         {weightCheck && (
-          <div className={`rounded-xl p-3 text-sm font-semibold ${weightCheck.off ? 'bg-red-50 text-red-700' : 'bg-emerald-50 text-emerald-700'}`}>
+          <div className={`rounded-xl p-3 text-sm font-semibold ${weightCheck.off ? 'bg-signal-red/10 text-signal-red' : 'bg-signal-green/10 text-signal-green'}`}>
             {weightCheck.off ? '⚠️' : '✓'} By weight ≈ <b>{fmtNum(weightCheck.impliedByWeight)}</b> pcs vs {fmtNum(weightCheck.counted)} counted
             {' '}— {weightCheck.gap === 0 ? 'exact match' : `${weightCheck.gap > 0 ? 'weight is ' + fmtNum(weightCheck.gap) + ' more' : 'short by ' + fmtNum(-weightCheck.gap)}`}
             {weightCheck.off ? ' (>10 pcs — re-check count/weight before saving)' : ''}
@@ -294,29 +294,29 @@ export default function NewProduction({ owner }) {
 
       {/* Live cost preview (owner only — managers don't see money) */}
       {owner && (
-      <Card className="p-4 bg-teal-50 border border-teal-200">
-        <FieldLabel className="text-teal-700">Cost preview (live)</FieldLabel>
+      <Card className="p-4 !bg-graphite border border-amber/30">
+        <FieldLabel className="text-amber">Cost preview (live)</FieldLabel>
         <div className="mt-2 space-y-2">
           {costing.perProduct.map((p, i) => (
             <div key={i} className="flex justify-between text-sm">
-              <span className="font-semibold text-slate-700">{p.name} × {fmtNum(p.pieces)}</span>
-              <span className="font-mono font-bold text-teal-800">₹{p.costPerPiece.toFixed(2)}/pc</span>
+              <span className="font-semibold text-chrome">{p.name} × {fmtNum(p.pieces)}</span>
+              <span className="font-mono font-bold text-amber">₹{p.costPerPiece.toFixed(2)}/pc</span>
             </div>
           ))}
-          <div className="border-t border-teal-200 pt-2 flex justify-between text-sm">
-            <span className="text-slate-600">Job work {fmtNum(costing.jobWork)} ÷ {fmtNum(totalPieces)} pcs</span>
-            <span className="font-mono text-slate-700">₹{costing.jobWorkPerPiece.toFixed(2)}/pc</span>
+          <div className="border-t border-hairline pt-2 flex justify-between text-sm">
+            <span className="text-muted">Job work {fmtNum(costing.jobWork)} ÷ {fmtNum(totalPieces)} pcs</span>
+            <span className="font-mono text-chrome">₹{costing.jobWorkPerPiece.toFixed(2)}/pc</span>
           </div>
-          <div className="flex justify-between font-bold text-base">
+          <div className="flex justify-between font-bold text-base text-chrome">
             <span>Total batch cost</span>
-            <span className="text-teal-800">₹{fmtNum(costing.grandTotal)}</span>
+            <span className="text-amber">₹{fmtNum(costing.grandTotal)}</span>
           </div>
         </div>
       </Card>
       )}
 
       <textarea value={note} onChange={e => setNote(e.target.value)} placeholder="Note (optional)"
-        className="w-full border-2 border-slate-200 rounded-2xl px-4 py-3 text-base" rows={2} />
+        className="w-full border-2 border-hairline rounded-2xl px-4 py-3 text-base text-chrome bg-graphite placeholder:text-muted focus:outline-none focus:ring-4 focus:ring-amber/30 focus:border-amber" rows={2} />
 
       <Button variant="success" size="lg" className="w-full" disabled={!canSave} onClick={save}>
         Save Production

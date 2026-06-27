@@ -4,11 +4,11 @@
  * consistent across every module.
  */
 const VARIANTS = {
-  primary:  'bg-blue-600 text-white shadow-lg shadow-blue-300 active:bg-blue-700',
-  success:  'bg-emerald-600 text-white shadow-lg shadow-emerald-300 active:bg-emerald-700',
-  danger:   'bg-red-600 text-white shadow-lg shadow-red-200 active:bg-red-700',
-  neutral:  'bg-white text-slate-600 border-2 border-slate-200 active:bg-slate-50',
-  ghost:    'bg-slate-100 text-slate-700 active:bg-slate-200',
+  primary:  'bg-amber text-graphite shadow-lg shadow-amber/20 active:bg-amber/90',
+  success:  'bg-signal-green text-graphite shadow-lg shadow-signal-green/20 active:bg-signal-green/90',
+  danger:   'bg-signal-red text-white shadow-lg shadow-signal-red/20 active:bg-signal-red/90',
+  neutral:  'bg-steel text-chrome border-2 border-hairline active:bg-graphite',
+  ghost:    'bg-graphite text-chrome border border-hairline active:bg-steel',
 }
 
 const SIZES = {
@@ -20,7 +20,7 @@ const SIZES = {
 export default function Button({
   variant = 'primary', size = 'md', disabled, className = '', children, ...props
 }) {
-  const base = 'font-bold transition-all active:scale-95 disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none disabled:active:scale-100'
+  const base = 'font-bold transition-all active:scale-95 disabled:bg-hairline disabled:text-muted disabled:shadow-none disabled:active:scale-100'
   return (
     <button
       disabled={disabled}

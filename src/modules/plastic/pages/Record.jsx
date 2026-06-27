@@ -22,16 +22,16 @@ export default function Record(props) {
   return (
     <div>
       <div className="max-w-lg mx-auto px-4 pt-4">
-        <div className="grid grid-cols-3 gap-2 bg-slate-100 rounded-2xl p-1">
+        <div className="grid grid-cols-3 gap-2 bg-graphite border border-hairline rounded-2xl p-1">
           {TABS.map(t => (
             <button key={t.key} onClick={() => setTab(t.key)}
               className={`rounded-xl py-2 text-sm font-bold transition ${
-                tab === t.key ? 'bg-white text-teal-700 shadow-sm' : 'text-slate-500'}`}>
+                tab === t.key ? 'bg-steel text-amber border border-hairline' : 'text-muted'}`}>
               {t.label}
             </button>
           ))}
         </div>
-        <p className="text-xs text-slate-400 text-center mt-2">{TABS.find(t => t.key === tab)?.hint}</p>
+        <p className="text-xs text-muted text-center mt-2">{TABS.find(t => t.key === tab)?.hint}</p>
       </div>
       <Active {...props} />
     </div>

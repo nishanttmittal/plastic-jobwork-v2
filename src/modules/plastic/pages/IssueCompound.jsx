@@ -82,9 +82,9 @@ export default function IssueCompound() {
         <div>
           <FieldLabel>Lot</FieldLabel>
           <input value={lotNo} onChange={e => setLotNo(e.target.value)} list="plw-lots" placeholder="LOT-01"
-            className="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-sm font-mono mt-1" />
+            className="w-full border-2 border-hairline rounded-xl px-3 py-2 text-sm font-mono mt-1 text-chrome bg-graphite placeholder:text-muted focus:outline-none focus:ring-4 focus:ring-amber/30 focus:border-amber" />
           <datalist id="plw-lots">{existingLots.map(l => <option key={l} value={l} />)}</datalist>
-          <div className="text-[11px] text-slate-400 mt-1">New material = new lot. Reuse a lot to add more to it.</div>
+          <div className="text-[11px] text-muted mt-1">New material = new lot. Reuse a lot to add more to it.</div>
         </div>
       </Card>
 
@@ -92,17 +92,17 @@ export default function IssueCompound() {
         <FieldLabel>Compound</FieldLabel>
         <Select options={compoundOpts} value={compoundId} onChange={e => setCompoundId(e.target.value)} />
         <div>
-          <span className="text-xs text-slate-500">Compound weight (kg)</span>
+          <span className="text-xs text-muted">Compound weight (kg)</span>
           <NumberInput value={compoundKg} onChange={e => setCompoundKg(e.target.value)} placeholder="0" className="mt-1" />
         </div>
         <div>
-          <span className="text-xs text-slate-500">For product (to estimate pieces)</span>
+          <span className="text-xs text-muted">For product (to estimate pieces)</span>
           <Select options={productOpts} value={productId} onChange={e => setProductId(e.target.value)} className="mt-1" />
         </div>
         {expectedFromThis > 0 && (
-          <div className="bg-teal-50 border border-teal-200 rounded-xl p-3 text-center">
-            <div className="text-3xl font-bold text-teal-800">≈ {fmtNum(expectedFromThis)} pcs</div>
-            <div className="text-xs text-slate-500 mt-0.5">expected from {fmtNum(compoundKg)} kg of {selProduct?.name}</div>
+          <div className="bg-graphite border border-hairline rounded-xl p-3 text-center">
+            <div className="font-mono tnum text-3xl font-bold text-amber">≈ {fmtNum(expectedFromThis)} pcs</div>
+            <div className="text-xs text-muted mt-0.5">expected from {fmtNum(compoundKg)} kg of {selProduct?.name}</div>
           </div>
         )}
       </Card>
@@ -111,7 +111,7 @@ export default function IssueCompound() {
         <FieldLabel>Masterbatch (optional)</FieldLabel>
         <Select options={mbOpts} value={mbId} onChange={e => setMbId(e.target.value)} />
         <div>
-          <span className="text-xs text-slate-500">Masterbatch weight (kg)</span>
+          <span className="text-xs text-muted">Masterbatch weight (kg)</span>
           <NumberInput value={mbKg} onChange={e => setMbKg(e.target.value)} placeholder="0" className="mt-1" />
         </div>
       </Card>
@@ -121,10 +121,10 @@ export default function IssueCompound() {
         <Select options={nutOpts} value={insertId} onChange={e => setInsertId(e.target.value)} />
         {insertId && (
           <div>
-            <span className="text-xs font-semibold text-red-600">Nuts — weight (kg) · required when supplying nuts *</span>
+            <span className="text-xs font-semibold text-signal-red">Nuts — weight (kg) · required when supplying nuts *</span>
             <NumberInput value={nutKg} onChange={e => setNutKg(e.target.value)} placeholder="0" className="mt-1" />
             {derivedNutQty > 0 && (
-              <div className="mt-1 bg-teal-50 text-teal-800 rounded-xl px-3 py-2 text-sm font-semibold">
+              <div className="mt-1 bg-graphite border border-hairline text-chrome rounded-xl px-3 py-2 text-sm font-semibold">
                 ≈ <b>{fmtNum(derivedNutQty)}</b> nuts (at {fmtNum(nutWeightG)} g each)
               </div>
             )}
@@ -133,25 +133,25 @@ export default function IssueCompound() {
       </Card>
 
       {bal && (
-        <Card className="p-4 bg-slate-50">
+        <Card className="p-4 !bg-graphite">
           <FieldLabel>Currently with this molder</FieldLabel>
           <div className="mt-2 flex justify-between text-sm">
-            <span className="text-slate-600">Compound balance</span>
-            <span className="font-mono font-bold">{fmtNum(bal.balanceKg)} kg</span>
+            <span className="text-muted">Compound balance</span>
+            <span className="font-mono font-bold text-chrome">{fmtNum(bal.balanceKg)} kg</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-slate-600">Nuts balance</span>
-            <span className="font-mono font-bold">{fmtNum(bal.nutBalance)}</span>
+            <span className="text-muted">Nuts balance</span>
+            <span className="font-mono font-bold text-chrome">{fmtNum(bal.nutBalance)}</span>
           </div>
-          <div className="flex justify-between text-sm border-t pt-2 mt-1">
-            <span className="text-slate-600">Pending pieces (approx)</span>
-            <span className="font-mono font-bold text-teal-700">{fmtNum(bal.pendingPieces)}</span>
+          <div className="flex justify-between text-sm border-t border-hairline pt-2 mt-1">
+            <span className="text-muted">Pending pieces (approx)</span>
+            <span className="font-mono font-bold text-amber">{fmtNum(bal.pendingPieces)}</span>
           </div>
         </Card>
       )}
 
       <textarea value={note} onChange={e => setNote(e.target.value)} placeholder="Note (optional)"
-        className="w-full border-2 border-slate-200 rounded-2xl px-4 py-3 text-base" rows={2} />
+        className="w-full border-2 border-hairline rounded-2xl px-4 py-3 text-base text-chrome bg-graphite placeholder:text-muted focus:outline-none focus:ring-4 focus:ring-amber/30 focus:border-amber" rows={2} />
 
       <Button variant="success" size="lg" className="w-full" disabled={!canSave} onClick={save}>
         Issue Material
