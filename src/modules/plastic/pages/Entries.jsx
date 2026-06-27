@@ -18,9 +18,9 @@ import { byId } from '../logic/costing'
 import { isLotFinalized } from '../logic/lot'
 
 const TYPE_META = {
-  issue:      { label: 'Issued',     icon: '📦', color: 'bg-cyan-100 text-cyan-700' },
-  production: { label: 'Production', icon: '➕', color: 'bg-emerald-100 text-emerald-700' },
-  return:     { label: 'Returned',   icon: '↩️', color: 'bg-amber-100 text-amber-700' },
+  issue:      { label: 'Issued',     icon: '📦', color: 'bg-chrome/10 text-chrome' },
+  production: { label: 'Production', icon: '➕', color: 'bg-signal-green/15 text-signal-green' },
+  return:     { label: 'Returned',   icon: '↩️', color: 'bg-amber/15 text-amber' },
 }
 
 // Which numeric fields are editable per entry type (date is always editable).
@@ -131,7 +131,7 @@ export default function Entries({ owner }) {
       </Card>
 
       {shown.length === 0 && (
-        <Card className="p-6 text-center text-slate-400">No entries yet.</Card>
+        <Card className="p-6 text-center text-muted">No entries yet.</Card>
       )}
 
       {shown.map(r => {
@@ -143,23 +143,23 @@ export default function Entries({ owner }) {
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${t.color}`}>{t.icon} {t.label}</span>
-                  <span className="text-xs text-slate-400">{fmtDate(r.date)}</span>
-                  {r.raw.lotNo && <span className="text-[10px] text-slate-400">· {r.raw.lotNo}</span>}
-                  {r.raw.editedAt && !r.voided && <span className="text-[10px] text-slate-400">(edited)</span>}
-                  {r.voided && <span className="text-[10px] font-bold text-red-500">VOIDED</span>}
+                  <span className="text-xs text-muted">{fmtDate(r.date)}</span>
+                  {r.raw.lotNo && <span className="text-[10px] text-muted">· {r.raw.lotNo}</span>}
+                  {r.raw.editedAt && !r.voided && <span className="text-[10px] text-muted">(edited)</span>}
+                  {r.voided && <span className="text-[10px] font-bold text-signal-red">VOIDED</span>}
                 </div>
-                <div className={`font-semibold text-slate-700 text-sm mt-1 ${r.voided ? 'line-through' : ''}`}>{r.molder}</div>
-                <div className="text-xs text-slate-500">{r.title}</div>
+                <div className={`font-semibold text-chrome text-sm mt-1 ${r.voided ? 'line-through' : ''}`}>{r.molder}</div>
+                <div className="text-xs text-muted">{r.title}</div>
               </div>
               {owner && !r.voided && (
                 locked ? (
-                  <span className="shrink-0 text-xs font-semibold text-slate-400" title="Lot finalized — reopen it in Lot Report to edit">🔒 locked</span>
+                  <span className="shrink-0 text-xs font-semibold text-muted" title="Lot finalized — reopen it in Lot Report to edit">🔒 locked</span>
                 ) : (
                   <div className="shrink-0 flex flex-col gap-1.5">
                     <button onClick={() => openEdit(r)}
-                      className="text-xs font-semibold text-slate-600 border border-slate-200 rounded-lg px-3 py-1.5">Edit</button>
+                      className="text-xs font-semibold text-chrome border border-hairline rounded-lg px-3 py-1.5">Edit</button>
                     <button onClick={() => voidEntry(r)}
-                      className="text-xs font-semibold text-red-600 border border-red-200 rounded-lg px-3 py-1.5">Void</button>
+                      className="text-xs font-semibold text-signal-red border border-signal-red/30 rounded-lg px-3 py-1.5">Void</button>
                   </div>
                 )
               )}
@@ -176,7 +176,7 @@ export default function Entries({ owner }) {
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${TYPE_META[editRow.kind].color}`}>
                 {TYPE_META[editRow.kind].icon} {TYPE_META[editRow.kind].label}
               </span>
-              <span className="font-semibold text-slate-700 text-sm">{editRow.molder}</span>
+              <span className="font-semibold text-chrome text-sm">{editRow.molder}</span>
             </div>
 
             <div>
@@ -194,7 +194,7 @@ export default function Entries({ owner }) {
             ))}
 
             {editRow.kind === 'production' && (
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted">
                 To change pieces or rejects, void this entry and re-enter it — that keeps the cost accurate.
               </p>
             )}

@@ -12,14 +12,18 @@
  * premium screens are built in the next plans. Settings is already live.
  */
 import { PlasticProvider } from './PlasticContext'
-import Placeholder from './pages/_Placeholder'
 import Settings from './pages/Settings'
 import Home from './pages/Home'
 import Record from './pages/Record'
 import Jobs from './pages/Jobs'
 import Costing from './pages/Costing'
-
-const ph = (title) => function PagePlaceholder(props) { return <Placeholder title={title} {...props} /> }
+import MaterialLog from './pages/MaterialLog'
+import Stock from './pages/Stock'
+import MachineLoad from './pages/MachineLoad'
+import Dashboard from './pages/Dashboard'
+import Entries from './pages/Entries'
+import Masters from './pages/Masters'
+import Admin from './pages/Admin'
 
 export const plasticModule = {
   id: 'plastic',
@@ -33,14 +37,14 @@ export const plasticModule = {
     { key: 'record',   title: 'Record',   icon: '➕', nav: true, roles: ['manager', 'owner'], Component: Record },
     { key: 'jobs',     title: 'Jobs',     icon: '👥', nav: true, roles: ['owner'], Component: Jobs },
     { key: 'costing',  title: 'Costing',  icon: '🏷️', nav: true, roles: ['owner'], Component: Costing },
-    { key: 'material', title: 'Material', icon: '📦', nav: true, roles: ['manager'], Component: ph('Material') },
+    { key: 'material', title: 'Material', icon: '📦', nav: true, roles: ['manager'], Component: MaterialLog },
     { key: 'more',     title: 'Settings', icon: '⚙️', nav: true, roles: ['manager', 'owner'], Component: Settings },
     // Secondary — opened from Settings (owner only).
-    { key: 'stock',   title: 'Stock',        icon: '📦', desc: 'Raw material, purchases, prices', roles: ['owner'], Component: ph('Stock') },
-    { key: 'machine', title: 'Machine Load', icon: '🏭', desc: 'Buy-a-machine signal', roles: ['owner'], Component: ph('Machine Load') },
-    { key: 'qc',      title: 'QC / Reports', icon: '🧪', desc: 'Rejections & trends', roles: ['owner'], Component: ph('QC / Reports') },
-    { key: 'entries', title: 'Entries',      icon: '📜', desc: 'Edit / void / audit', roles: ['owner'], Component: ph('Entries') },
-    { key: 'masters', title: 'Masters',      icon: '🗂️', desc: 'Products, rates, moulders', roles: ['owner'], Component: ph('Masters') },
-    { key: 'admin',   title: 'Admin',        icon: '⚙️', desc: 'Backup, restore', roles: ['owner'], Component: ph('Admin') },
+    { key: 'stock',   title: 'Stock',        icon: '📦', desc: 'Raw material, purchases, prices', roles: ['owner'], Component: Stock },
+    { key: 'machine', title: 'Machine Load', icon: '🏭', desc: 'Buy-a-machine signal', roles: ['owner'], Component: MachineLoad },
+    { key: 'qc',      title: 'QC / Reports', icon: '🧪', desc: 'Rejections & trends', roles: ['owner'], Component: Dashboard },
+    { key: 'entries', title: 'Entries',      icon: '📜', desc: 'Edit / void / audit', roles: ['owner'], Component: Entries },
+    { key: 'masters', title: 'Masters',      icon: '🗂️', desc: 'Products, rates, moulders', roles: ['owner'], Component: Masters },
+    { key: 'admin',   title: 'Admin',        icon: '⚙️', desc: 'Backup, restore', roles: ['owner'], Component: Admin },
   ],
 }

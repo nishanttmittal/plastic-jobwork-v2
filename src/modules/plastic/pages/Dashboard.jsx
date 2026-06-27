@@ -1,6 +1,7 @@
 /**
- * Dashboard — cost per piece, molder balances + reconciliation flags, today's
- * output, and the "should I buy the machine?" break-even indicator.
+ * Dashboard / QC & Reports — last-15-day material in/out, final product,
+ * rejections (QC) with breakdown, cost per piece, molder balances, and the
+ * "should I buy the machine?" break-even indicator. Owner-only money sections.
  */
 import { useMemo } from 'react'
 import { usePlastic } from '../PlasticContext'
@@ -107,12 +108,12 @@ export default function Dashboard({ owner }) {
       {/* Today */}
       <div className="grid grid-cols-2 gap-3">
         <Card className="p-4 text-center">
-          <div className="text-3xl font-bold text-teal-700">{fmtNum(piecesToday)}</div>
-          <div className="text-xs text-slate-500 mt-1">Pieces today</div>
+          <div className="font-mono tnum text-3xl font-bold text-signal-green">{fmtNum(piecesToday)}</div>
+          <div className="text-xs text-muted mt-1">Pieces today</div>
         </Card>
         <Card className="p-4 text-center">
-          <div className="text-3xl font-bold text-slate-700">{fmtNum(monthPieces)}</div>
-          <div className="text-xs text-slate-500 mt-1">Pieces this month</div>
+          <div className="font-mono tnum text-3xl font-bold text-chrome">{fmtNum(monthPieces)}</div>
+          <div className="text-xs text-muted mt-1">Pieces this month</div>
         </Card>
       </div>
 
@@ -120,11 +121,11 @@ export default function Dashboard({ owner }) {
       <Card className="p-4">
         <FieldLabel>Raw material — last 15 days</FieldLabel>
         <div className="mt-2 text-sm space-y-1">
-          <div className="text-xs font-bold text-slate-500 uppercase mt-1">Sent to molders (OUT)</div>
+          <div className="text-xs font-bold text-muted uppercase mt-1">Sent to molders (OUT)</div>
           <Row label="Compound" val={`${fmtNum(last15.rawOut.compoundKg)} kg`} />
           <Row label="Masterbatch" val={`${fmtNum(last15.rawOut.mbKg)} kg`} />
           <Row label="Nuts" val={fmtNum(last15.rawOut.nuts)} />
-          <div className="text-xs font-bold text-slate-500 uppercase mt-2">Returned (IN)</div>
+          <div className="text-xs font-bold text-muted uppercase mt-2">Returned (IN)</div>
           <Row label="Regrind (runner + rejects)" val={`${fmtNum(last15.rawIn.regrindKg)} kg`} />
           <Row label="Burnt loss" val={`${fmtNum(last15.rawIn.burntKg)} kg`} />
           <Row label="Returned by molder (compound + regrind)" val={`${fmtNum(last15.rawIn.returnedKg)} kg`} />
@@ -136,7 +137,7 @@ export default function Dashboard({ owner }) {
       <Card className="p-4">
         <FieldLabel>Final product — last 15 days</FieldLabel>
         <div className="mt-2 text-sm space-y-1">
-          {Object.keys(last15.prodMap).length === 0 && <p className="text-slate-400">No production in the last 15 days.</p>}
+          {Object.keys(last15.prodMap).length === 0 && <p className="text-muted">No production in the last 15 days.</p>}
           {products.filter(p => last15.prodMap[p.id]).map(p => (
             <Row key={p.id} label={p.name} val={`${fmtNum(last15.prodMap[p.id])} pcs`} />
           ))}
@@ -149,21 +150,21 @@ export default function Dashboard({ owner }) {
           <FieldLabel>Rejections — last 15 days</FieldLabel>
           {rejects15.total > 0 && (
             <span className={`text-sm font-bold px-2.5 py-0.5 rounded-full ${
-              rejects15.pct >= 5 ? 'bg-red-100 text-red-700'
-                : rejects15.pct >= 2 ? 'bg-amber-100 text-amber-700'
-                : 'bg-emerald-100 text-emerald-700'}`}>
+              rejects15.pct >= 5 ? 'bg-signal-red/15 text-signal-red'
+                : rejects15.pct >= 2 ? 'bg-amber/15 text-amber'
+                : 'bg-signal-green/15 text-signal-green'}`}>
               {rejects15.pct.toFixed(1)}%
             </span>
           )}
         </div>
         {rejects15.total === 0 ? (
-          <p className="text-slate-400 text-sm mt-2">No production in the last 15 days.</p>
+          <p className="text-muted text-sm mt-2">No production in the last 15 days.</p>
         ) : rejects15.rej === 0 ? (
-          <p className="text-emerald-600 text-sm mt-2 font-semibold">✅ Zero rejects on {fmtNum(rejects15.good)} pieces.</p>
+          <p className="text-signal-green text-sm mt-2 font-semibold">✅ Zero rejects on {fmtNum(rejects15.good)} pieces.</p>
         ) : (
           <div className="mt-2 text-sm space-y-1">
             <Row label="Reject pieces" val={`${fmtNum(rejects15.rej)} of ${fmtNum(rejects15.total)}`} />
-            <div className="text-xs font-bold text-slate-500 uppercase mt-2">By reason</div>
+            <div className="text-xs font-bold text-muted uppercase mt-2">By reason</div>
             {rejects15.reasons.map(([key, qty]) => (
               <Row key={key || 'none'} label={rejectReasonLabel(key)} val={fmtNum(qty)} />
             ))}
@@ -180,17 +181,17 @@ export default function Dashboard({ owner }) {
             const mat = productMaterialCost(p, masters)
             return (
               <div key={p.id} className="flex items-center justify-between text-sm">
-                <span className="font-semibold text-slate-700">{p.name}</span>
+                <span className="font-semibold text-chrome">{p.name}</span>
                 <span className="text-right">
-                  <span className="text-slate-400 text-xs mr-2">material ₹{mat.total.toFixed(2)}</span>
-                  <span className="font-mono font-bold text-teal-800">
+                  <span className="text-muted text-xs mr-2">material ₹{mat.total.toFixed(2)}</span>
+                  <span className="font-mono font-bold text-amber">
                     {lastCost[p.id] != null ? `₹${lastCost[p.id].toFixed(2)}/pc` : '—'}
                   </span>
                 </span>
               </div>
             )
           })}
-          <p className="text-xs text-slate-400 pt-1">Full cost includes the job-work share, which depends on shift output. Shown value = last actual.</p>
+          <p className="text-xs text-muted pt-1">Full cost includes the job-work share, which depends on shift output. Shown value = last actual.</p>
         </div>
       </Card>
       )}
@@ -199,14 +200,14 @@ export default function Dashboard({ owner }) {
       <Card className="p-4">
         <FieldLabel>Molder balances</FieldLabel>
         <div className="mt-2 space-y-3">
-          {balances.length === 0 && <p className="text-sm text-slate-400">No activity yet. Issue material and record production to begin.</p>}
+          {balances.length === 0 && <p className="text-sm text-muted">No activity yet. Issue material and record production to begin.</p>}
           {balances.map(b => {
             const h = molderHisab(b.molderId, masters, data)
             return (
-              <div key={b.molderId} className="border border-slate-100 rounded-xl p-3">
+              <div key={b.molderId} className="border border-hairline rounded-xl p-3">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-slate-800">{b.molder?.name || '(molder)'}</span>
-                  {b.flag && <span className="text-xs bg-red-100 text-red-700 font-bold px-2 py-0.5 rounded-full">🚩 check material</span>}
+                  <span className="font-bold text-chrome">{b.molder?.name || '(molder)'}</span>
+                  {b.flag && <span className="text-xs bg-signal-red/15 text-signal-red font-bold px-2 py-0.5 rounded-full">🚩 check material</span>}
                 </div>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2 text-sm">
                   <Row label="Compound bal." val={`${fmtNum(b.balanceKg)} kg`} />
@@ -219,11 +220,11 @@ export default function Dashboard({ owner }) {
                 {b.expectedPieces > 0 && (
                   <div className="mt-3">
                     <div className="flex justify-between text-xs mb-1">
-                      <span className="text-slate-500">Yield: {fmtNum(b.producedPieces)} made / ≈{fmtNum(b.expectedPieces)} expected</span>
-                      <span className="font-bold text-teal-700">≈{fmtNum(b.pendingPieces)} pending</span>
+                      <span className="text-muted">Yield: {fmtNum(b.producedPieces)} made / ≈{fmtNum(b.expectedPieces)} expected</span>
+                      <span className="font-bold text-amber">≈{fmtNum(b.pendingPieces)} pending</span>
                     </div>
-                    <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-teal-500 rounded-full"
+                    <div className="h-2.5 bg-hairline rounded-full overflow-hidden">
+                      <div className="h-full bg-amber rounded-full"
                         style={{ width: `${Math.min(100, Math.round((b.producedPieces / b.expectedPieces) * 100))}%` }} />
                     </div>
                   </div>
@@ -236,16 +237,16 @@ export default function Dashboard({ owner }) {
 
       {/* Make vs buy (owner only) */}
       {owner && (
-      <Card className={`p-4 ${buyVerdict === 'buy' ? 'bg-emerald-50 border border-emerald-200' : 'bg-slate-50'}`}>
+      <Card className={`p-4 ${buyVerdict === 'buy' ? '!bg-signal-green/10 !border-signal-green/30' : '!bg-graphite'}`}>
         <FieldLabel>Buy the machine? (break-even)</FieldLabel>
         {inhousePerPiece == null ? (
-          <p className="text-sm text-slate-500 mt-2">Record this month's production to see the in-house vs outsource comparison.</p>
+          <p className="text-sm text-muted mt-2">Record this month's production to see the in-house vs outsource comparison.</p>
         ) : (
           <div className="mt-2 text-sm space-y-1">
             <Row label="This month pieces" val={fmtNum(monthPieces)} />
             <Row label="In-house cost/piece" val={`₹${inhousePerPiece.toFixed(2)}`} />
             <Row label="Outsource cost/piece" val={`₹${E.outsourcePerPiece.toFixed(2)}`} />
-            <div className={`mt-2 font-bold ${buyVerdict === 'buy' ? 'text-emerald-700' : 'text-slate-700'}`}>
+            <div className={`mt-2 font-bold ${buyVerdict === 'buy' ? 'text-signal-green' : 'text-chrome'}`}>
               {buyVerdict === 'buy'
                 ? '✅ At this volume, owning the machine is cheaper — worth evaluating a purchase.'
                 : '⏳ Keep outsourcing — volume is too low to justify the ₹25L machine yet.'}
@@ -261,8 +262,8 @@ export default function Dashboard({ owner }) {
 function Row({ label, val, bold }) {
   return (
     <div className="flex justify-between">
-      <span className="text-slate-500">{label}</span>
-      <span className={`font-mono ${bold ? 'font-bold text-slate-900' : 'text-slate-700'}`}>{val}</span>
+      <span className="text-muted">{label}</span>
+      <span className={`font-mono ${bold ? 'font-bold text-amber' : 'text-chrome'}`}>{val}</span>
     </div>
   )
 }

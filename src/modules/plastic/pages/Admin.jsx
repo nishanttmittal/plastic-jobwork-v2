@@ -22,9 +22,9 @@ export default function Admin() {
           <div className="text-3xl">🔒</div>
           <FieldLabel>Admin password</FieldLabel>
           <input type="password" value={pw} onChange={e => setPw(e.target.value)}
-            className="w-full border-2 border-slate-300 rounded-2xl px-4 py-3 text-center text-lg" />
+            className="w-full border-2 border-hairline rounded-2xl px-4 py-3 text-center text-lg text-chrome bg-graphite placeholder:text-muted focus:outline-none focus:ring-4 focus:ring-amber/30 focus:border-amber" />
           <Button className="w-full" onClick={() => setOk(pw === ADMIN_PASSWORD)}>Unlock</Button>
-          {pw && pw !== ADMIN_PASSWORD && <p className="text-red-500 text-sm">Wrong password</p>}
+          {pw && pw !== ADMIN_PASSWORD && <p className="text-signal-red text-sm">Wrong password</p>}
         </Card>
       </div>
     )
@@ -93,8 +93,8 @@ export default function Admin() {
         <FieldLabel>Backup & Restore</FieldLabel>
         <Button className="w-full" onClick={backup}>⬇️ Download backup (JSON)</Button>
         <label className="block">
-          <span className="text-sm text-slate-500">Restore from backup</span>
-          <input type="file" accept="application/json" onChange={restore} className="mt-1 w-full text-sm" />
+          <span className="text-sm text-muted">Restore from backup</span>
+          <input type="file" accept="application/json" onChange={restore} className="mt-1 w-full text-sm text-muted" />
         </label>
       </Card>
 
@@ -102,16 +102,16 @@ export default function Admin() {
 
       <Card className="p-4">
         <FieldLabel>Recent production (void if wrong)</FieldLabel>
-        <div className="mt-2 divide-y">
-          {recent.length === 0 && <p className="text-sm text-slate-400">None yet.</p>}
+        <div className="mt-2 divide-y divide-hairline">
+          {recent.length === 0 && <p className="text-sm text-muted">None yet.</p>}
           {recent.map(e => {
             const pcs = (e.items || []).reduce((s, it) => s + (Number(it.pieces) || 0), 0)
             return (
               <div key={e.id} className="flex justify-between items-center py-2 text-sm">
-                <span className={e.voided ? 'line-through text-slate-400' : 'text-slate-600'}>
+                <span className={e.voided ? 'line-through text-muted' : 'text-chrome'}>
                   {e.entryNo} · {fmtDate(e.date)} · {fmtNum(pcs)} pcs · ₹{fmtNum(e.costSnapshot?.grandTotal || 0)}
                 </span>
-                {!e.voided && <button onClick={() => voidEntry(e.id)} className="text-red-500 text-xs font-bold">Void</button>}
+                {!e.voided && <button onClick={() => voidEntry(e.id)} className="text-signal-red text-xs font-bold">Void</button>}
               </div>
             )
           })}
@@ -122,15 +122,15 @@ export default function Admin() {
         <FieldLabel>Activity log</FieldLabel>
         <div className="mt-2 space-y-1 max-h-64 overflow-y-auto">
           {recentLogs.map((l, i) => (
-            <div key={i} className="text-xs text-slate-500">
-              <span className="font-mono">{(l.ts || '').slice(0, 16).replace('T', ' ')}</span> · <b>{l.action}</b> · {l.detail}
+            <div key={i} className="text-xs text-muted">
+              <span className="font-mono">{(l.ts || '').slice(0, 16).replace('T', ' ')}</span> · <b className="text-chrome">{l.action}</b> · {l.detail}
             </div>
           ))}
         </div>
       </Card>
 
-      <Card className="p-4 border border-red-200">
-        <FieldLabel className="text-red-600">Danger zone</FieldLabel>
+      <Card className="p-4 !border-signal-red/30">
+        <FieldLabel className="text-signal-red">Danger zone</FieldLabel>
         <Button variant="danger" className="w-full mt-2" onClick={resetAll}>Clear all transactions</Button>
       </Card>
     </div>
@@ -155,29 +155,31 @@ function Users() {
   const toggle = (u) => { users.update(u.id, { active: !(u.active !== false) }); log('USER_TOGGLE', `${u.email} → ${u.active !== false ? 'disabled' : 'active'}`, 'admin') }
   const del = (u) => { if (confirm(`Remove ${u.email}?`)) { users.remove(u.id); log('USER_REMOVE', u.email, 'admin') } }
 
+  const RAW = 'w-full border-2 border-hairline rounded-xl px-3 py-2 text-sm text-chrome bg-graphite placeholder:text-muted focus:outline-none focus:ring-4 focus:ring-amber/30 focus:border-amber'
+
   return (
     <Card className="p-4">
       <FieldLabel>Users & Access</FieldLabel>
-      <p className="text-xs text-slate-400 mt-1">Owner ({OWNER_EMAILS[0]}) always has full access. Add a Manager so they can record material sent &amp; received.</p>
-      <div className="mt-2 divide-y">
-        {users.list.length === 0 && <p className="text-sm text-slate-400 py-2">No managers added yet.</p>}
+      <p className="text-xs text-muted mt-1">Owner ({OWNER_EMAILS[0]}) always has full access. Add a Manager so they can record material sent &amp; received.</p>
+      <div className="mt-2 divide-y divide-hairline">
+        {users.list.length === 0 && <p className="text-sm text-muted py-2">No managers added yet.</p>}
         {users.list.map(u => (
           <div key={u.id} className="flex items-center justify-between py-2 text-sm">
-            <span className={u.active === false ? 'text-slate-400 line-through' : 'text-slate-700'}>
+            <span className={u.active === false ? 'text-muted line-through' : 'text-chrome'}>
               {u.email} · <b>{u.role}</b>{u.name ? ` · ${u.name}` : ''}
             </span>
             <span className="flex gap-2">
-              <button onClick={() => toggle(u)} className="text-amber-600 text-xs font-bold">{u.active === false ? 'Enable' : 'Disable'}</button>
-              <button onClick={() => del(u)} className="text-red-500 text-xs font-bold">Remove</button>
+              <button onClick={() => toggle(u)} className="text-amber text-xs font-bold">{u.active === false ? 'Enable' : 'Disable'}</button>
+              <button onClick={() => del(u)} className="text-signal-red text-xs font-bold">Remove</button>
             </span>
           </div>
         ))}
       </div>
-      <div className="mt-3 space-y-2 border-t pt-3">
+      <div className="mt-3 space-y-2 border-t border-hairline pt-3">
         <input value={email} onChange={e => setEmail(e.target.value)} placeholder="manager@gmail.com (their Google login)"
-          className="w-full border-2 border-slate-300 rounded-xl px-3 py-2 text-sm" />
+          className={RAW} />
         <input value={name} onChange={e => setName(e.target.value)} placeholder="Name (optional)"
-          className="w-full border-2 border-slate-200 rounded-xl px-3 py-2 text-sm" />
+          className={RAW} />
         <div className="flex gap-2">
           <Select options={[{ value: 'manager', label: 'Manager (material in/out)' }, { value: 'owner', label: 'Admin (full)' }]}
             value={role} onChange={e => setRole(e.target.value)} className="!py-2 !text-sm flex-1" />

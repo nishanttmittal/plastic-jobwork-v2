@@ -48,12 +48,12 @@ export default function MaterialLog() {
   }, [issues.list, production.list, returns.list, molders, masters.products, since])
 
   const Row = ({ r }) => (
-    <div className="flex items-start justify-between gap-2 text-sm border-b border-slate-50 py-1.5 last:border-0">
+    <div className="flex items-start justify-between gap-2 text-sm border-b border-hairline py-1.5 last:border-0">
       <div className="min-w-0">
-        <div className="text-slate-700">{r.text}</div>
-        <div className="text-xs text-slate-400">{r.molder}{r.lot ? ` · ${r.lot}` : ''}</div>
+        <div className="text-chrome">{r.text}</div>
+        <div className="text-xs text-muted">{r.molder}{r.lot ? ` · ${r.lot}` : ''}</div>
       </div>
-      <div className="text-xs text-slate-400 shrink-0">{fmtDate(r.date)}</div>
+      <div className="text-xs text-muted shrink-0">{fmtDate(r.date)}</div>
     </div>
   )
 
@@ -61,11 +61,11 @@ export default function MaterialLog() {
     <div className="max-w-lg mx-auto p-4 space-y-3">
       <Card className="p-4">
         <FieldLabel>📤 Sent to moulder — last 15 days ({sent.length})</FieldLabel>
-        <div className="mt-2">{sent.length ? sent.map(r => <Row key={r.id} r={r} />) : <div className="text-sm text-slate-400 py-2">Nothing sent in 15 days.</div>}</div>
+        <div className="mt-2">{sent.length ? sent.map(r => <Row key={r.id} r={r} />) : <div className="text-sm text-muted py-2">Nothing sent in 15 days.</div>}</div>
       </Card>
       <Card className="p-4">
         <FieldLabel>📥 Received from moulder — last 15 days ({received.length})</FieldLabel>
-        <div className="mt-2">{received.length ? received.map(r => <Row key={r.id} r={r} />) : <div className="text-sm text-slate-400 py-2">Nothing received in 15 days.</div>}</div>
+        <div className="mt-2">{received.length ? received.map(r => <Row key={r.id} r={r} />) : <div className="text-sm text-muted py-2">Nothing received in 15 days.</div>}</div>
       </Card>
     </div>
   )
