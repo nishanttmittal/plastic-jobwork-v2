@@ -22,7 +22,7 @@ export default function Moulders({ owner }) {
   if (!selId) {
     return (
       <div className="max-w-lg mx-auto p-4 space-y-3">
-        {molders.length === 0 && <Card className="p-6 text-center text-slate-400">No molders yet. Add them in More → Masters.</Card>}
+        {molders.length === 0 && <Card className="p-6 text-center text-muted">No molders yet. Add them in Settings → Masters.</Card>}
         {molders.map(mo => {
           const b = molderBalance(mo.id, matData)
           const h = owner ? molderHisab(mo.id, masters, moneyData) : null
@@ -30,17 +30,17 @@ export default function Moulders({ owner }) {
             <button key={mo.id} onClick={() => setSelId(mo.id)} className="w-full text-left">
               <Card className="p-4">
                 <div className="flex items-center justify-between">
-                  <span className="font-bold text-slate-800">{mo.name}</span>
-                  {b.flag && <span className="text-xs bg-red-100 text-red-700 font-bold px-2 py-0.5 rounded-full">🚩 check</span>}
+                  <span className="font-bold text-chrome">{mo.name}</span>
+                  {b.flag && <span className="text-xs bg-signal-red/15 text-signal-red font-bold px-2 py-0.5 rounded-full">🚩 check</span>}
                 </div>
                 <div className="mt-2 grid grid-cols-3 gap-2 text-center text-sm">
-                  <Mini n={`${fmtNum(b.balanceKg)}kg`} l="material" tone={b.balanceKg < 0 ? 'text-red-600' : ''} />
+                  <Mini n={`${fmtNum(b.balanceKg)}kg`} l="material" tone={b.balanceKg < 0 ? 'text-signal-red' : ''} />
                   <Mini n={fmtNum(b.pendingPieces)} l="pending" />
                   <Mini n={fmtNum(b.nutBalance)} l="nuts" />
                 </div>
                 {owner && h && (
-                  <div className="mt-2 text-xs text-right text-slate-500">
-                    {h.balance >= 0 ? 'You owe ' : 'Owes you '}<b className="text-slate-700">₹{fmtNum(Math.abs(h.balance))}</b>
+                  <div className="mt-2 text-xs text-right text-muted">
+                    {h.balance >= 0 ? 'You owe ' : 'Owes you '}<b className="text-amber">₹{fmtNum(Math.abs(h.balance))}</b>
                   </div>
                 )}
               </Card>
@@ -55,10 +55,10 @@ export default function Moulders({ owner }) {
 }
 
 function Mini({ n, l, tone }) {
-  return <div className="bg-slate-50 rounded-xl py-2"><div className={`font-bold ${tone || 'text-slate-800'}`}>{n}</div><div className="text-[11px] text-slate-500">{l}</div></div>
+  return <div className="bg-graphite border border-hairline rounded-xl py-2"><div className={`font-bold ${tone || 'text-chrome'}`}>{n}</div><div className="text-[11px] text-muted">{l}</div></div>
 }
 function Row({ label, val, bold, tone }) {
-  return <div className="flex justify-between text-sm"><span className="text-slate-600">{label}</span><span className={`font-mono ${bold ? 'font-bold' : ''} ${tone || ''}`}>{val}</span></div>
+  return <div className="flex justify-between text-sm"><span className="text-muted">{label}</span><span className={`font-mono ${bold ? 'font-bold' : ''} ${tone || 'text-chrome'}`}>{val}</span></div>
 }
 
 function MolderDetail({ molderId, owner, onBack }) {
@@ -93,10 +93,10 @@ function MolderDetail({ molderId, owner, onBack }) {
   return (
     <div className="max-w-lg mx-auto p-4 space-y-4">
       <Toast msg={msg} />
-      <button onClick={onBack} className="text-sm text-teal-700 font-semibold">‹ All molders</button>
+      <button onClick={onBack} className="text-sm text-amber font-semibold">‹ All molders</button>
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-slate-800">{molder?.name || '(molder)'}</h2>
-        {b.flag && <span className="text-xs bg-red-100 text-red-700 font-bold px-2 py-0.5 rounded-full">🚩 check material</span>}
+        <h2 className="text-xl font-bold text-chrome">{molder?.name || '(molder)'}</h2>
+        {b.flag && <span className="text-xs bg-signal-red/15 text-signal-red font-bold px-2 py-0.5 rounded-full">🚩 check material</span>}
       </div>
 
       {/* Material */}
@@ -106,11 +106,11 @@ function MolderDetail({ molderId, owner, onBack }) {
           <Row label="Issued (compound)" val={`${fmtNum(b.issuedKg)} kg`} />
           <Row label="Used in good pieces" val={`${fmtNum(b.plasticInProductsKg)} kg`} />
           <Row label="Regrind back (production)" val={`${fmtNum(b.regrindKg)} kg`} />
-          <Row label="Burnt / purge loss" val={`${fmtNum(b.burntKg)} kg`} tone="text-amber-600" />
+          <Row label="Burnt / purge loss" val={`${fmtNum(b.burntKg)} kg`} tone="text-amber" />
           <Row label="Returned unused + regrind" val={`${fmtNum(b.returnedKg)} kg`} />
-          <div className="border-t pt-1 mt-1"><Row label="Balance with molder" val={`${fmtNum(b.balanceKg)} kg`} bold tone={b.balanceKg < 0 ? 'text-red-600' : 'text-teal-700'} /></div>
+          <div className="border-t border-hairline pt-1 mt-1"><Row label="Balance with molder" val={`${fmtNum(b.balanceKg)} kg`} bold tone={b.balanceKg < 0 ? 'text-signal-red' : 'text-amber'} /></div>
           <Row label="Nuts balance" val={fmtNum(b.nutBalance)} />
-          <Row label="Pieces pending (approx)" val={`≈ ${fmtNum(b.pendingPieces)}`} bold tone="text-teal-700" />
+          <Row label="Pieces pending (approx)" val={`≈ ${fmtNum(b.pendingPieces)}`} bold tone="text-amber" />
         </div>
       </Card>
 
@@ -119,13 +119,13 @@ function MolderDetail({ molderId, owner, onBack }) {
         <Card className="p-4">
           <div className="flex items-center justify-between">
             <FieldLabel>Money</FieldLabel>
-            <button onClick={sharePdf} className="text-xs font-semibold text-teal-700 border border-teal-200 rounded-lg px-3 py-1.5">Share PDF</button>
+            <button onClick={sharePdf} className="text-xs font-semibold text-amber border border-amber/30 rounded-lg px-3 py-1.5">Share PDF</button>
           </div>
           <div className="mt-2 space-y-1">
             <Row label="Dues (job work)" val={`₹${fmtNum(h.dues)}`} />
             <Row label="Advances given" val={`₹${fmtNum(h.advances)}`} />
             <Row label="Payments made" val={`₹${fmtNum(h.payments)}`} />
-            <div className="border-t pt-1 mt-1"><Row label={h.balance >= 0 ? 'You owe molder' : 'Molder owes you'} val={`₹${fmtNum(Math.abs(h.balance))}`} bold /></div>
+            <div className="border-t border-hairline pt-1 mt-1"><Row label={h.balance >= 0 ? 'You owe molder' : 'Molder owes you'} val={`₹${fmtNum(Math.abs(h.balance))}`} bold tone="text-amber" /></div>
           </div>
           <div className="mt-3 grid grid-cols-3 gap-2">
             <div className="col-span-1"><DateInput value={date} onChange={e => setDate(e.target.value)} /></div>
@@ -139,12 +139,12 @@ function MolderDetail({ molderId, owner, onBack }) {
       {/* Recent entries */}
       <Card className="p-4">
         <FieldLabel>Recent entries</FieldLabel>
-        <div className="mt-2 divide-y divide-slate-50">
-          {history.length === 0 && <p className="text-sm text-slate-400">No entries yet.</p>}
+        <div className="mt-2 divide-y divide-hairline">
+          {history.length === 0 && <p className="text-sm text-muted">No entries yet.</p>}
           {history.map((e, i) => (
             <div key={i} className={`py-2 flex items-center justify-between text-sm ${e.v ? 'opacity-40 line-through' : ''}`}>
-              <div><span className="text-xs font-semibold text-slate-500">{e.t}</span> · {e.txt}</div>
-              <span className="text-xs text-slate-400">{fmtDate(e.date)}</span>
+              <div className="text-chrome"><span className="text-xs font-semibold text-muted">{e.t}</span> · {e.txt}</div>
+              <span className="text-xs text-muted">{fmtDate(e.date)}</span>
             </div>
           ))}
         </div>

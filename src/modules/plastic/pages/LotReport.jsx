@@ -68,9 +68,9 @@ export default function LotReport() {
   if (lots.length === 0) {
     return (
       <div className="max-w-lg mx-auto p-4">
-        <Card className="p-6 text-center text-slate-500 space-y-2">
+        <Card className="p-6 text-center text-muted space-y-2">
           <div className="text-3xl">📦</div>
-          <div className="font-semibold text-slate-700">No lots yet</div>
+          <div className="font-semibold text-chrome">No lots yet</div>
           <div className="text-sm">Tag a <b>Lot</b> when you issue material (Record → Issue), then record the
             pieces and scrap against the same lot. The reconciliation builds itself here.</div>
         </Card>
@@ -84,7 +84,7 @@ export default function LotReport() {
         <FieldLabel>Lot</FieldLabel>
         <Select className="mt-1" value={lotNo} onChange={e => setLotNo(e.target.value)}
           options={lots.map(l => ({ value: l.lotNo, label: `${l.lotNo} · ${l.molderId ? '' : ''}${fmtDate(l.firstDate)}` }))} />
-        {r?.molder && <div className="text-xs text-slate-500 mt-1">Molder: {r.molder.name}</div>}
+        {r?.molder && <div className="text-xs text-muted mt-1">Molder: {r.molder.name}</div>}
       </Card>
 
       {r && (
@@ -99,7 +99,7 @@ export default function LotReport() {
           <Card className="p-4 space-y-2">
             <FieldLabel>📥 Received back</FieldLabel>
             {r.received.machineShots > 0 && (
-              <div className={`text-sm rounded-xl px-3 py-2 ${Math.abs(r.received.machinePieces - (r.received.goodPieces + r.received.rejectPieces)) > Math.max(5, r.received.machinePieces * 0.02) ? 'bg-amber-50 text-amber-800' : 'bg-emerald-50 text-emerald-700'}`}>
+              <div className={`text-sm rounded-xl px-3 py-2 ${Math.abs(r.received.machinePieces - (r.received.goodPieces + r.received.rejectPieces)) > Math.max(5, r.received.machinePieces * 0.02) ? 'bg-amber/10 text-amber' : 'bg-signal-green/10 text-signal-green'}`}>
                 🏭 Machine: {fmtNum(r.received.machineShots)} shots → <b>{fmtNum(r.received.machinePieces)}</b> pcs vs {fmtNum(r.received.goodPieces + r.received.rejectPieces)} counted
               </div>
             )}
@@ -109,7 +109,7 @@ export default function LotReport() {
               const total = r.received.goodPieces + r.received.rejectPieces
               const pct = total > 0 ? (r.received.rejectPieces / total) * 100 : 0
               return (
-                <div className={`text-sm rounded-xl px-3 py-2 ${pct >= 5 ? 'bg-red-50 text-red-700' : pct >= 2 ? 'bg-amber-50 text-amber-800' : 'bg-slate-50 text-slate-600'}`}>
+                <div className={`text-sm rounded-xl px-3 py-2 ${pct >= 5 ? 'bg-signal-red/10 text-signal-red' : pct >= 2 ? 'bg-amber/10 text-amber' : 'bg-graphite text-muted'}`}>
                   <div className="font-semibold">Rejections: {pct.toFixed(1)}% ({fmtNum(r.received.rejectPieces)} of {fmtNum(total)})</div>
                   {rejReasons.length > 0 && (
                     <div className="mt-1 space-y-0.5">
@@ -127,7 +127,7 @@ export default function LotReport() {
             <Row label="Loose nuts returned" val={`${fmtNum(r.returned.nuts)} pcs`} />
             <Row label="Finished weight (weighed)" val={`${fmtNum(r.received.finishedKg)} kg`} />
             {r.efficiency && (
-              <div className={`text-sm rounded-xl px-3 py-2 mt-1 ${r.efficiency.pct != null && r.efficiency.pct < 85 ? 'bg-amber-50 text-amber-800' : 'bg-slate-50 text-slate-600'}`}>
+              <div className={`text-sm rounded-xl px-3 py-2 mt-1 ${r.efficiency.pct != null && r.efficiency.pct < 85 ? 'bg-amber/10 text-amber' : 'bg-graphite text-muted'}`}>
                 ⚙️ {fmtNum(r.efficiency.actualPerHr)} shots/hr{r.efficiency.targetPerHr > 0 && ` (target ${fmtNum(r.efficiency.targetPerHr)})`}
                 {r.efficiency.pct != null && ` — ${fmtNum(r.efficiency.pct)}% efficiency`}
                 {r.efficiency.pct != null && r.efficiency.pct < 85 && ` · ~${fmtNum(r.efficiency.idleHours)} hr idle 🐢`}
@@ -135,7 +135,7 @@ export default function LotReport() {
             )}
           </Card>
 
-          <Card className={`p-4 space-y-2 ${r.flag ? 'bg-red-50 border border-red-200' : 'bg-slate-50'}`}>
+          <Card className={`p-4 space-y-2 ${r.flag ? '!bg-signal-red/10 !border-signal-red/30' : '!bg-graphite'}`}>
             <FieldLabel>⚖️ Material balance</FieldLabel>
             <Row label="Compound sent" val={`${fmtNum(r.sent.compoundKg)} kg`} />
             <Row label="Accounted" val={`${fmtNum(r.accountedKg)} kg`} />
@@ -143,27 +143,27 @@ export default function LotReport() {
             <Row label="Material loss" val={`${fmtNum(r.lossPct)} %`} />
             <Row label="Recoverable regrind" val={`${fmtNum(r.regrindKg)} kg`} />
             <Row label="Nut balance" val={`${fmtNum(r.nutBalance)} pcs`} />
-            {r.flag && <div className="text-xs font-semibold text-red-600">🚩 More plastic came out than was sent — re-check weights/pieces.</div>}
+            {r.flag && <div className="text-xs font-semibold text-signal-red">🚩 More plastic came out than was sent — re-check weights/pieces.</div>}
           </Card>
 
-          <Card className="p-4 bg-teal-50 border border-teal-200 space-y-3">
-            <FieldLabel className="text-teal-700">🏷️ Cost per piece (both incl. nut + job-work)</FieldLabel>
+          <Card className="p-4 !bg-graphite border border-amber/30 space-y-3">
+            <FieldLabel className="text-amber">🏷️ Cost per piece (both incl. nut + job-work)</FieldLabel>
             <div className="grid grid-cols-2 gap-3">
               <RateBox title="Scrap = full loss" val={r.rates.fullLoss} note="all compound charged" />
               <RateBox title="Regrind reused" val={r.rates.regrind} note="regrind credited back" />
             </div>
-            <div className="text-xs text-slate-600 border-t border-teal-200 pt-2 space-y-0.5">
-              <div className="flex justify-between"><span>Compound / piece</span><span className="font-mono">₹{fmtNum(r.rates.compoundFullLoss)} → ₹{fmtNum(r.rates.compoundNet)}</span></div>
-              <div className="flex justify-between"><span>Nut / piece</span><span className="font-mono">₹{fmtNum(r.rates.nutPerPiece)}</span></div>
-              <div className="flex justify-between"><span>Job-work / piece</span><span className="font-mono">₹{fmtNum(r.rates.jobWorkPerPiece)}</span></div>
+            <div className="text-xs text-muted border-t border-hairline pt-2 space-y-0.5">
+              <div className="flex justify-between"><span>Compound / piece</span><span className="font-mono text-chrome">₹{fmtNum(r.rates.compoundFullLoss)} → ₹{fmtNum(r.rates.compoundNet)}</span></div>
+              <div className="flex justify-between"><span>Nut / piece</span><span className="font-mono text-chrome">₹{fmtNum(r.rates.nutPerPiece)}</span></div>
+              <div className="flex justify-between"><span>Job-work / piece</span><span className="font-mono text-chrome">₹{fmtNum(r.rates.jobWorkPerPiece)}</span></div>
             </div>
           </Card>
 
           <Button size="lg" className="w-full" onClick={exportPdf}>📄 Export PDF (share on WhatsApp)</Button>
 
           {finalized ? (
-            <div className="bg-slate-100 rounded-2xl p-3 text-center space-y-2">
-              <div className="text-sm font-semibold text-slate-700">🔒 Lot finalized — entries are locked</div>
+            <div className="bg-graphite border border-hairline rounded-2xl p-3 text-center space-y-2">
+              <div className="text-sm font-semibold text-chrome">🔒 Lot finalized — entries are locked</div>
               <Button variant="ghost" className="w-full" onClick={reopen}>Reopen for editing</Button>
             </div>
           ) : (
@@ -178,18 +178,18 @@ export default function LotReport() {
 function Row({ label, val, sub, strong }) {
   return (
     <div className="flex items-center justify-between text-sm">
-      <span className="text-slate-600">{label}{sub && <span className="text-slate-400"> · {sub}</span>}</span>
-      <span className={`font-mono ${strong ? 'font-bold text-slate-800' : 'text-slate-700'}`}>{val}</span>
+      <span className="text-muted">{label}{sub && <span className="text-muted/70"> · {sub}</span>}</span>
+      <span className={`font-mono ${strong ? 'font-bold text-chrome' : 'text-chrome'}`}>{val}</span>
     </div>
   )
 }
 
 function RateBox({ title, val, note }) {
   return (
-    <div className="bg-white rounded-xl p-3 text-center border border-teal-100">
-      <div className="text-2xl font-bold text-teal-800">₹{fmtNum(val)}</div>
-      <div className="text-[11px] font-semibold text-slate-600 mt-0.5">{title}</div>
-      <div className="text-[10px] text-slate-400">{note}</div>
+    <div className="bg-steel rounded-xl p-3 text-center border border-amber/20">
+      <div className="font-mono tnum text-2xl font-bold text-amber">₹{fmtNum(val)}</div>
+      <div className="text-[11px] font-semibold text-chrome mt-0.5">{title}</div>
+      <div className="text-[10px] text-muted">{note}</div>
     </div>
   )
 }

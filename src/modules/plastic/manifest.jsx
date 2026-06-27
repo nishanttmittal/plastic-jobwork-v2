@@ -16,6 +16,8 @@ import Placeholder from './pages/_Placeholder'
 import Settings from './pages/Settings'
 import Home from './pages/Home'
 import Record from './pages/Record'
+import Jobs from './pages/Jobs'
+import Costing from './pages/Costing'
 
 const ph = (title) => function PagePlaceholder(props) { return <Placeholder title={title} {...props} /> }
 
@@ -29,8 +31,8 @@ export const plasticModule = {
     // lands on Record. Material is manager-only.
     { key: 'home',     title: 'Home',     icon: '🏠', nav: true, roles: ['owner'], Component: Home },
     { key: 'record',   title: 'Record',   icon: '➕', nav: true, roles: ['manager', 'owner'], Component: Record },
-    { key: 'jobs',     title: 'Jobs',     icon: '👥', nav: true, roles: ['owner'], Component: ph('Jobs') },
-    { key: 'costing',  title: 'Costing',  icon: '🏷️', nav: true, roles: ['owner'], Component: ph('Costing') },
+    { key: 'jobs',     title: 'Jobs',     icon: '👥', nav: true, roles: ['owner'], Component: Jobs },
+    { key: 'costing',  title: 'Costing',  icon: '🏷️', nav: true, roles: ['owner'], Component: Costing },
     { key: 'material', title: 'Material', icon: '📦', nav: true, roles: ['manager'], Component: ph('Material') },
     { key: 'more',     title: 'Settings', icon: '⚙️', nav: true, roles: ['manager', 'owner'], Component: Settings },
     // Secondary — opened from Settings (owner only).

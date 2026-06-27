@@ -94,21 +94,21 @@ export default function Costing() {
         <>
           {/* Headline price */}
           <Card className="p-5 text-center">
-            <div className="text-5xl font-bold text-teal-700">{rupee(c.price)}</div>
-            <div className="text-sm text-slate-500 mt-1">
+            <div className="font-mono tnum text-5xl font-bold text-amber">{rupee(c.price)}</div>
+            <div className="text-sm text-muted mt-1">
               per piece · {includeNut ? 'with nut' : 'without nut'}{includeScrap ? ` · +${fmtNum(scrapPct)}% reject markup` : ''}
             </div>
             <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
               <Chip on={includeNut} onClick={() => setIncludeNut(v => !v)}>Include nut</Chip>
               <Chip on={includeScrap} onClick={() => setIncludeScrap(v => !v)}>Reject markup</Chip>
               {includeScrap && (
-                <span className="flex items-center gap-1 text-sm">
+                <span className="flex items-center gap-1 text-sm text-muted">
                   <span className="w-16"><NumberInput value={scrapPct} onChange={e => setScrapPct(e.target.value)} className="!py-1 text-center" /></span>% reject
                 </span>
               )}
             </div>
             {includeScrap && (
-              <p className="text-xs text-slate-400 mt-2 max-w-xs mx-auto">
+              <p className="text-xs text-muted mt-2 max-w-xs mx-auto">
                 Raises the price so your <b>good</b> pieces cover the cost of <b>rejected</b> ones.
                 Enter your typical reject %. (Runner / regrind reuse is separate — see Assumptions below.)
               </p>
@@ -125,7 +125,7 @@ export default function Costing() {
               {includeNut && <Row label="Nut / inserts" val={rupee(c.nut)} />}
               <Row label={`Job-work (₹${fmtNum(c.shiftCost)}/shift ÷ ${fmtNum(c.piecesPerShift)} pcs)`} val={rupee(c.jobWork)} />
               {includeScrap && <Row label={`Reject markup (${fmtNum(scrapPct)}% rejects)`} val={`× ${(1 / (1 - c.W)).toFixed(3)}`} />}
-              <div className="border-t pt-1 mt-1"><Row label="Price per piece" val={rupee(c.price)} bold /></div>
+              <div className="border-t border-hairline pt-1 mt-1"><Row label="Price per piece" val={rupee(c.price)} bold /></div>
             </div>
           </Card>
 
@@ -136,16 +136,16 @@ export default function Costing() {
               <Field label="Shift hours"><NumberInput value={shiftHrs} onChange={e => setShiftHrs(e.target.value)} /></Field>
               <Field label="Regrind %"><NumberInput value={regrindPct} onChange={e => setRegrindPct(e.target.value)} /></Field>
             </div>
-            <div className="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2 mt-2">
-              <div className="text-sm font-semibold text-slate-700">Cap regrind at safe blend
-                <span className="block text-xs font-normal text-slate-400">protects strength (15–20% typical)</span></div>
+            <div className="flex items-center justify-between bg-graphite border border-hairline rounded-xl px-3 py-2 mt-2">
+              <div className="text-sm font-semibold text-chrome">Cap regrind at safe blend
+                <span className="block text-xs font-normal text-muted">protects strength (15–20% typical)</span></div>
               <div className="flex items-center gap-2">
                 {limitRegrind && <span className="w-14"><NumberInput value={blendLimit} onChange={e => setBlendLimit(e.target.value)} className="!py-1 text-center" /></span>}
-                <button onClick={() => setLimitRegrind(v => !v)} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${limitRegrind ? 'bg-emerald-600 text-white' : 'bg-slate-300 text-slate-700'}`}>{limitRegrind ? 'ON' : 'OFF'}</button>
+                <button onClick={() => setLimitRegrind(v => !v)} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${limitRegrind ? 'bg-signal-green text-graphite' : 'bg-hairline text-muted'}`}>{limitRegrind ? 'ON' : 'OFF'}</button>
               </div>
             </div>
-            {c.capped && <p className="text-xs text-amber-600 mt-1">Reuse capped at {fmtNum(blendLimit)}% — turn OFF to override.</p>}
-            <p className="text-xs text-slate-400 mt-2">{fmtNum(c.cavities)} cavities × {fmtNum(shotsPerHr)} shots/hr × {fmtNum(shiftHrs)} hr = {fmtNum(c.piecesPerShift)} pcs/shift.</p>
+            {c.capped && <p className="text-xs text-amber mt-1">Reuse capped at {fmtNum(blendLimit)}% — turn OFF to override.</p>}
+            <p className="text-xs text-muted mt-2">{fmtNum(c.cavities)} cavities × {fmtNum(shotsPerHr)} shots/hr × {fmtNum(shiftHrs)} hr = {fmtNum(c.piecesPerShift)} pcs/shift.</p>
           </Expander>
 
           {/* Reverse */}
@@ -155,12 +155,12 @@ export default function Costing() {
               <Field label="Target is"><Select value={targetWithNut} onChange={e => setTargetWithNut(e.target.value)} options={[{ value: '1', label: 'with nut' }, { value: '0', label: 'without nut' }]} /></Field>
             </div>
             {rev && (rev.ok ? (
-              <div className="mt-3 bg-rose-50 rounded-xl p-3 text-center">
-                <div className="text-2xl font-bold text-rose-700">≤ {rupee(rev.shiftBeforeGst)} / shift</div>
-                <div className="text-xs text-slate-500 mt-0.5">to hit {rupee(rev.t)} {targetWithNut === '1' ? 'with' : 'without'} nut{rev.gst ? ` (₹${rev.shiftIncl.toFixed(0)} incl GST)` : ''} · job-work ≤ {rupee(rev.jwPiece)}/pc</div>
+              <div className="mt-3 bg-graphite border border-hairline rounded-xl p-3 text-center">
+                <div className="font-mono tnum text-2xl font-bold text-amber">≤ {rupee(rev.shiftBeforeGst)} / shift</div>
+                <div className="text-xs text-muted mt-0.5">to hit {rupee(rev.t)} {targetWithNut === '1' ? 'with' : 'without'} nut{rev.gst ? ` (₹${rev.shiftIncl.toFixed(0)} incl GST)` : ''} · job-work ≤ {rupee(rev.jwPiece)}/pc</div>
               </div>
             ) : (
-              <p className="mt-3 text-sm text-red-600 text-center">{rupee(rev.t)} is below material cost ({rupee(rev.material)}) — not possible even with a free shift.</p>
+              <p className="mt-3 text-sm text-signal-red text-center">{rupee(rev.t)} is below material cost ({rupee(rev.material)}) — not possible even with a free shift.</p>
             ))}
           </Expander>
         </>
@@ -170,19 +170,19 @@ export default function Costing() {
 }
 
 function Chip({ on, onClick, children }) {
-  return <button onClick={onClick} className={`px-3 py-1.5 rounded-full text-sm font-semibold border ${on ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-slate-500 border-slate-300'}`}>{on ? '✓ ' : ''}{children}</button>
+  return <button onClick={onClick} className={`px-3 py-1.5 rounded-full text-sm font-semibold border ${on ? 'bg-amber text-graphite border-amber' : 'bg-graphite text-muted border-hairline'}`}>{on ? '✓ ' : ''}{children}</button>
 }
 function Expander({ title, children }) {
   return (
-    <details className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-      <summary className="px-4 py-3 font-bold text-slate-700 text-sm cursor-pointer select-none">{title}</summary>
+    <details className="bg-steel rounded-2xl border border-hairline overflow-hidden">
+      <summary className="px-4 py-3 font-bold text-chrome text-sm cursor-pointer select-none">{title}</summary>
       <div className="px-4 pb-4 space-y-1">{children}</div>
     </details>
   )
 }
 function Row({ label, val, bold }) {
-  return <div className="flex justify-between text-sm"><span className="text-slate-600">{label}</span><span className={`font-mono ${bold ? 'font-bold' : ''}`}>{val}</span></div>
+  return <div className="flex justify-between text-sm"><span className="text-muted">{label}</span><span className={`font-mono text-chrome ${bold ? 'font-bold text-amber' : ''}`}>{val}</span></div>
 }
 function Field({ label, children }) {
-  return <div><span className="text-xs text-slate-500">{label}</span><div className="mt-1">{children}</div></div>
+  return <div><span className="text-xs text-muted">{label}</span><div className="mt-1">{children}</div></div>
 }
