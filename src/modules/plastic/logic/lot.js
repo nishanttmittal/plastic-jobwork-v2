@@ -90,6 +90,7 @@ export function lotReconciliation(lotNo, masters, data) {
   const mbKg = round2(issues.reduce((s, i) => s + num(i.mbKg), 0))
   const compoundId = issues.find(i => i.compoundId)?.compoundId || products[0]?.compoundId
   const cmpRate = num(byId(masters.compounds, compoundId)?.rate)
+  const compoundName = byId(masters.compounds, compoundId)?.name || ''
   const insertId = issues.find(i => i.insertId)?.insertId
     || (products[0]?.inserts || [])[0]?.insertId || ''
   const nutRate = num(byId(masters.inserts, insertId)?.rate)
@@ -149,7 +150,7 @@ export function lotReconciliation(lotNo, masters, data) {
   const rateRegrind = round2(compoundNet + nutPerPiece + jobWorkPerPiece)
 
   return {
-    lotNo, molder, molderId, firstDate: issues[0]?.date || prod[0]?.date || '',
+    lotNo, molder, molderId, compoundName, firstDate: issues[0]?.date || prod[0]?.date || '',
     hasData: issues.length + prod.length + rets.length > 0,
     sent: { compoundKg, nutsSent, mbKg, cmpRate, nutRate },
     received: { goodPieces, rejectPieces, runnerKg, rejectsKg, burntKg, finishedKg, plasticInProductsKg, nutsUsed, shifts, hoursRun, machineShots, machinePieces },

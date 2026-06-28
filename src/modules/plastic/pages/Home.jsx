@@ -18,8 +18,14 @@ export default function Home({ owner, onOpen }) {
 
   // Only NEGATIVE stock is a real alert (issued/used more than bought). Stock at
   // ~0 is normal here — material is sent straight to the moulder, not stored.
+  // GUARD: only trust this once purchases have actually loaded. On the shared
+  // free-tier Firestore, reads can die mid-session and the purchases query comes
+  // back empty — which would make every issued material look negative and raise
+  // a FALSE "shortfall". If no purchases are loaded, suppress the alarm.
   const shortStock = useMemo(
-    () => (owner ? materialStock(masters, { purchases: purchases.list, issues: issues.list, returns: returns.list }).all.filter(i => i.stock < 0) : []),
+    () => (owner && purchases.list.length > 0
+      ? materialStock(masters, { purchases: purchases.list, issues: issues.list, returns: returns.list }).all.filter(i => i.stock < 0)
+      : []),
     [owner, masters, purchases.list, issues.list, returns.list],
   )
 
@@ -92,13 +98,13 @@ export default function Home({ owner, onOpen }) {
           {openLots.length > 0 ? (
             <div className="mt-3 border-t border-hairline pt-2 space-y-1.5">
               {openLots.map(r => (
-                <div key={r.lotNo} className="flex items-center justify-between text-sm">
-                  <span className="flex items-center gap-2">
+                <div key={r.lotNo} className="flex items-center justify-between text-sm gap-2">
+                  <span className="flex items-center gap-2 min-w-0">
                     <StatusPip tone={r.flag ? 'red' : 'amber'} />
-                    <span className="font-semibold text-chrome">{r.lotNo}</span>
-                    <span className="text-muted">{r.molder?.name || ''}</span>
+                    <span className="font-semibold text-chrome shrink-0">{r.lotNo}</span>
+                    <span className="text-muted truncate">{[r.compoundName, r.molder?.name].filter(Boolean).join(' · ')}</span>
                   </span>
-                  <span className="font-mono tnum text-xs text-muted">
+                  <span className="font-mono tnum text-xs text-muted shrink-0 text-right">
                     {r.pendingPieces > 0 ? `${fmtNum(r.pendingPieces)} pcs · ` : ''}{r.nutBalance > 0 ? `${fmtNum(r.nutBalance)} nuts · ` : ''}{r.balanceKg > 0.5 ? `${fmtNum(r.balanceKg)} kg` : ''}
                   </span>
                 </div>
