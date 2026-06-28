@@ -48,6 +48,21 @@ describe('lot KUPPA-01', () => {
   it('no over-consumption flag', () => expect(r.flag).toBe(false))
 })
 
+describe('no-nut lot (Knob) must not borrow another product’s nut', () => {
+  // A product with NO inserts, issued without a nut. The lot must show zero nut
+  // rate / zero nut cost — it must NOT fall back to the first product's nut.
+  const knob = { id: 'prd_knob', name: 'Knob', compoundId: 'cmp_pp_knob', gPerPiece: 27.25, netPartG: 26, cavities: 4, inserts: [] }
+  const m2 = { ...masters, compounds: [...masters.compounds, { id: 'cmp_pp_knob', rate: 85 }], products: [kuppa, knob] }
+  const d2 = {
+    issues: [{ lotNo: 'KNOB-01', molderId: 'mld_1', compoundId: 'cmp_pp_knob', compoundKg: 500, productId: 'prd_knob' }],
+    production: [], returns: [],
+  }
+  const r = lotReconciliation('KNOB-01', m2, d2)
+  it('nuts sent = 0', () => expect(r.sent.nutsSent).toBe(0))
+  it('nut rate = ₹0 (no phantom Kuppa nut)', () => expect(r.sent.nutRate).toBe(0))
+  it('nut cost per piece = ₹0', () => expect(r.rates.nutPerPiece).toBe(0))
+})
+
 describe('stock', () => {
   it('nut stock = +5548 (18000 bought − 18000 issued + 5548 returned)', () => {
     const purchases = [{ kind: 'nut', materialId: 'nut_a', qty: 18000, rate: 1.5 }]

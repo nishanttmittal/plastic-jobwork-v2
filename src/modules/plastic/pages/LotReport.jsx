@@ -92,7 +92,7 @@ export default function LotReport() {
           <Card className="p-4 space-y-2">
             <FieldLabel>📤 Raw material sent</FieldLabel>
             <Row label="Compound (PP)" val={`${fmtNum(r.sent.compoundKg)} kg`} sub={`@ ₹${fmtNum(r.sent.cmpRate)}/kg`} />
-            <Row label="Nuts" val={`${fmtNum(r.sent.nutsSent)} pcs`} sub={`@ ₹${fmtNum(r.sent.nutRate)}`} />
+            {r.sent.nutsSent > 0 && <Row label="Nuts" val={`${fmtNum(r.sent.nutsSent)} pcs`} sub={`@ ₹${fmtNum(r.sent.nutRate)}`} />}
             {r.sent.mbKg > 0 && <Row label="Masterbatch" val={`${fmtNum(r.sent.mbKg)} kg`} />}
           </Card>
 
@@ -154,7 +154,7 @@ export default function LotReport() {
             </div>
             <div className="text-xs text-muted border-t border-hairline pt-2 space-y-0.5">
               <div className="flex justify-between"><span>Compound / piece</span><span className="font-mono text-chrome">₹{fmtNum(r.rates.compoundFullLoss)} → ₹{fmtNum(r.rates.compoundNet)}</span></div>
-              <div className="flex justify-between"><span>Nut / piece</span><span className="font-mono text-chrome">₹{fmtNum(r.rates.nutPerPiece)}</span></div>
+              {r.rates.nutPerPiece > 0 && <div className="flex justify-between"><span>Nut / piece</span><span className="font-mono text-chrome">₹{fmtNum(r.rates.nutPerPiece)}</span></div>}
               <div className="flex justify-between"><span>Job-work / piece</span><span className="font-mono text-chrome">₹{fmtNum(r.rates.jobWorkPerPiece)}</span></div>
             </div>
           </Card>

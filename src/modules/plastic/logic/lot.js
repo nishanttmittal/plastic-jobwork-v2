@@ -84,15 +84,21 @@ export function lotReconciliation(lotNo, masters, data) {
   const molderId = issues[0]?.molderId || prod[0]?.molderId || ''
   const molder = byId(masters.molders, molderId)
 
+  // THIS lot's product (from its issues, else its production). Used for the
+  // compound/nut fallbacks — never products[0], which would borrow the FIRST
+  // product's nut and wrongly show a nut + nut-cost on a no-nut lot (e.g. Knob).
+  const lotProductId = issues.find(i => i.productId)?.productId || prod[0]?.items?.[0]?.productId || ''
+  const lotProduct = byId(products, lotProductId)
+
   // ── SENT (raw material handed to the molder for this lot) ──
   const compoundKg = round2(issues.reduce((s, i) => s + num(i.compoundKg), 0))
   const nutsSent = issues.reduce((s, i) => s + num(i.nutQty), 0)
   const mbKg = round2(issues.reduce((s, i) => s + num(i.mbKg), 0))
-  const compoundId = issues.find(i => i.compoundId)?.compoundId || products[0]?.compoundId
+  const compoundId = issues.find(i => i.compoundId)?.compoundId || lotProduct?.compoundId
   const cmpRate = num(byId(masters.compounds, compoundId)?.rate)
   const compoundName = byId(masters.compounds, compoundId)?.name || ''
   const insertId = issues.find(i => i.insertId)?.insertId
-    || (products[0]?.inserts || [])[0]?.insertId || ''
+    || (lotProduct?.inserts || [])[0]?.insertId || ''
   const nutRate = num(byId(masters.inserts, insertId)?.rate)
 
   // ── RECEIVED (pieces + scrap from production tagged to this lot) ──
@@ -142,7 +148,7 @@ export function lotReconciliation(lotNo, masters, data) {
   const efficiency = runEfficiency(machineShots, hoursRun, cycleSec)
 
   // ── TWO PIECE-RATES ──
-  const nutPerPiece = round2(nutRate * (goodPieces > 0 ? nutsUsed / goodPieces : nutsPerPiece(products[0])))
+  const nutPerPiece = round2(nutRate * (goodPieces > 0 ? nutsUsed / goodPieces : nutsPerPiece(lotProduct)))
   const jobWorkPerPiece = goodPieces > 0 ? round2(jobWork / goodPieces) : 0
   const compoundFullLoss = goodPieces > 0 ? round2((compoundKg * cmpRate) / goodPieces) : 0
   const compoundNet = goodPieces > 0 ? round2((Math.max(0, compoundKg - regrindKg) * cmpRate) / goodPieces) : 0
