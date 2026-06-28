@@ -3,6 +3,9 @@
  * for one lot, shareable on WhatsApp. Mirrors the Hisab PDF style.
  */
 import { fmtDate, fmtNum } from '../../../core/utils/format'
+
+// Per-piece costs need paise (fmtNum rounds to whole rupees → ₹1.50 became ₹2).
+const rupee2 = (n) => (Number(n) || 0).toFixed(2)
 import { lotReconciliation } from './lot'
 
 // Heavy PDF libs load on demand (only when exporting) to keep the initial bundle small.
@@ -28,7 +31,7 @@ export async function buildLotPdf(lotNo, masters, data) {
     head: [['Raw material SENT', 'Qty']],
     body: [
       ['Compound (PP)', `${fmtNum(r.sent.compoundKg)} kg  @ Rs ${fmtNum(r.sent.cmpRate)}/kg`],
-      ['Nuts', `${fmtNum(r.sent.nutsSent)} pcs  @ Rs ${fmtNum(r.sent.nutRate)}`],
+      ...(r.sent.nutsSent > 0 ? [['Nuts', `${fmtNum(r.sent.nutsSent)} pcs  @ Rs ${rupee2(r.sent.nutRate)}`]] : []),
       ...(r.sent.mbKg > 0 ? [['Masterbatch', `${fmtNum(r.sent.mbKg)} kg`]] : []),
     ],
     styles: { fontSize: 9 }, headStyles: { fillColor: teal },
@@ -71,10 +74,10 @@ export async function buildLotPdf(lotNo, masters, data) {
     startY: (doc.lastAutoTable?.finalY || 40) + 4,
     head: [['COST PER PIECE', 'Compound', 'Nut', 'Job work', 'Total']],
     body: [
-      ['A) Scrap = full loss', `Rs ${fmtNum(r.rates.compoundFullLoss)}`, `Rs ${fmtNum(r.rates.nutPerPiece)}`,
-        `Rs ${fmtNum(r.rates.jobWorkPerPiece)}`, `Rs ${fmtNum(r.rates.fullLoss)}`],
-      ['B) Regrind reused', `Rs ${fmtNum(r.rates.compoundNet)}`, `Rs ${fmtNum(r.rates.nutPerPiece)}`,
-        `Rs ${fmtNum(r.rates.jobWorkPerPiece)}`, `Rs ${fmtNum(r.rates.regrind)}`],
+      ['A) Scrap = full loss', `Rs ${rupee2(r.rates.compoundFullLoss)}`, `Rs ${rupee2(r.rates.nutPerPiece)}`,
+        `Rs ${rupee2(r.rates.jobWorkPerPiece)}`, `Rs ${rupee2(r.rates.fullLoss)}`],
+      ['B) Regrind reused', `Rs ${rupee2(r.rates.compoundNet)}`, `Rs ${rupee2(r.rates.nutPerPiece)}`,
+        `Rs ${rupee2(r.rates.jobWorkPerPiece)}`, `Rs ${rupee2(r.rates.regrind)}`],
     ],
     styles: { fontSize: 9 }, headStyles: { fillColor: teal },
     columnStyles: { 4: { fontStyle: 'bold' } },

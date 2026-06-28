@@ -153,9 +153,9 @@ export default function LotReport() {
               <RateBox title="Regrind reused" val={r.rates.regrind} note="regrind credited back" />
             </div>
             <div className="text-xs text-muted border-t border-hairline pt-2 space-y-0.5">
-              <div className="flex justify-between"><span>Compound / piece</span><span className="font-mono text-chrome">₹{fmtNum(r.rates.compoundFullLoss)} → ₹{fmtNum(r.rates.compoundNet)}</span></div>
-              {r.rates.nutPerPiece > 0 && <div className="flex justify-between"><span>Nut / piece</span><span className="font-mono text-chrome">₹{fmtNum(r.rates.nutPerPiece)}</span></div>}
-              <div className="flex justify-between"><span>Job-work / piece</span><span className="font-mono text-chrome">₹{fmtNum(r.rates.jobWorkPerPiece)}</span></div>
+              <div className="flex justify-between"><span>Compound / piece</span><span className="font-mono text-chrome">₹{rupee2(r.rates.compoundFullLoss)} → ₹{rupee2(r.rates.compoundNet)}</span></div>
+              {r.rates.nutPerPiece > 0 && <div className="flex justify-between"><span>Nut / piece</span><span className="font-mono text-chrome">₹{rupee2(r.rates.nutPerPiece)}</span></div>}
+              <div className="flex justify-between"><span>Job-work / piece</span><span className="font-mono text-chrome">₹{rupee2(r.rates.jobWorkPerPiece)}</span></div>
             </div>
           </Card>
 
@@ -184,10 +184,14 @@ function Row({ label, val, sub, strong }) {
   )
 }
 
+// Per-piece costs are small — show paise (₹6.17), unlike fmtNum which rounds to
+// whole rupees (fine for counts/kg, but it turned ₹1.50 nut into "₹2").
+const rupee2 = (n) => (Number(n) || 0).toFixed(2)
+
 function RateBox({ title, val, note }) {
   return (
     <div className="bg-steel rounded-xl p-3 text-center border border-amber/20">
-      <div className="font-mono tnum text-2xl font-bold text-amber">₹{fmtNum(val)}</div>
+      <div className="font-mono tnum text-2xl font-bold text-amber">₹{rupee2(val)}</div>
       <div className="text-[11px] font-semibold text-chrome mt-0.5">{title}</div>
       <div className="text-[10px] text-muted">{note}</div>
     </div>
