@@ -1,47 +1,22 @@
 /**
- * Dashboard / QC & Reports — last-15-day material in/out, final product,
- * rejections (QC) with breakdown, cost per piece, molder balances, and the
- * "should I buy the machine?" break-even indicator. Owner-only money sections.
+ * QC / Reports — production reporting that ISN'T shown elsewhere:
+ *   • Rejections (last 15 days) with % badge and breakdown by reason (QC)
+ *   • Raw material in/out (last 15 days)
+ *   • Final product made (last 15 days)
+ *
+ * Deliberately does NOT repeat Home (pieces today/month), Jobs (moulder
+ * balances / money) or Machine Load (buy-the-machine) — each lives in one place.
  */
 import { useMemo } from 'react'
 import { usePlastic } from '../PlasticContext'
 import { Card, FieldLabel } from '../../../core/ui'
-import { todayStr, daysAgoStr, fmtNum } from '../../../core/utils/format'
-import { productMaterialCost } from '../logic/costing'
-import { allMolderBalances } from '../logic/reconcile'
-import { molderHisab } from '../logic/hisab'
-import { MACHINE_ECONOMICS, rejectReasonLabel } from '../config'
+import { daysAgoStr, fmtNum } from '../../../core/utils/format'
+import { rejectReasonLabel } from '../config'
 
-export default function Dashboard({ owner }) {
-  const { production, issues, returns, payments, masters, products } = usePlastic()
+export default function Dashboard() {
+  const { production, issues, returns, products } = usePlastic()
 
-  const data = { production: production.list, issues: issues.list, returns: returns.list, payments: payments.list }
-
-  const today = todayStr()
-  const piecesToday = useMemo(() => production.list
-    .filter(e => e.date === today && !e.voided)
-    .reduce((s, e) => s + (e.items || []).reduce((a, it) => a + (Number(it.pieces) || 0), 0), 0),
-  [production.list, today])
-
-  const m = new Date().getMonth(), y = new Date().getFullYear()
-  const monthEntries = production.list.filter(e => {
-    const d = new Date(e.date); return d.getMonth() === m && d.getFullYear() === y && !e.voided
-  })
-  const monthPieces = monthEntries.reduce((s, e) => s + (e.items || []).reduce((a, it) => a + (Number(it.pieces) || 0), 0), 0)
-
-  // Latest actual cost/piece per product (from cost snapshots).
-  const lastCost = useMemo(() => {
-    const map = {}
-    const sorted = [...production.list].filter(e => !e.voided).sort((a, b) => (a.date < b.date ? 1 : -1))
-    for (const e of sorted) {
-      for (const p of (e.costSnapshot?.perProduct || [])) {
-        if (map[p.productId] == null) map[p.productId] = p.costPerPiece
-      }
-    }
-    return map
-  }, [production.list])
-
-  // Last 15 days — raw material in/out and final product (no money; manager-safe).
+  // Last 15 days — raw material in/out and final product (pieces only).
   const since15 = daysAgoStr(15)
   const last15 = useMemo(() => {
     const iss = issues.list.filter(i => !i.voided && i.date >= since15)
@@ -66,7 +41,7 @@ export default function Dashboard({ owner }) {
   }, [issues.list, production.list, returns.list, since15])
 
   // Rejections — last 15 days: total good vs reject pieces, rejection %, and a
-  // breakdown by reason (QC). Pieces only — manager-safe, no money.
+  // breakdown by reason (QC). Pieces only — no money.
   const rejects15 = useMemo(() => {
     const prod = production.list.filter(e => !e.voided && e.date >= since15)
     let good = 0, rej = 0
@@ -93,58 +68,9 @@ export default function Dashboard({ owner }) {
     return { good, rej, total, pct, reasons }
   }, [production.list, since15])
 
-  const balances = useMemo(() => allMolderBalances(masters, data), [masters, production.list, issues.list, returns.list])
-
-  // Make-vs-buy (monthly basis, scaled from this month's output).
-  const E = MACHINE_ECONOMICS
-  const monthlyInhouse = E.monthlyOperator + E.monthlyRent + E.monthlyElectricity + E.monthlyMaintenance
-    + E.machineCost / E.lifeYears / 12
-  const inhousePerPiece = monthPieces > 0 ? monthlyInhouse / monthPieces : null
-  const buyVerdict = inhousePerPiece == null ? null
-    : inhousePerPiece <= E.outsourcePerPiece ? 'buy' : 'outsource'
-
   return (
     <div className="max-w-lg mx-auto p-4 space-y-4">
-      {/* Today */}
-      <div className="grid grid-cols-2 gap-3">
-        <Card className="p-4 text-center">
-          <div className="font-mono tnum text-3xl font-bold text-signal-green">{fmtNum(piecesToday)}</div>
-          <div className="text-xs text-muted mt-1">Pieces today</div>
-        </Card>
-        <Card className="p-4 text-center">
-          <div className="font-mono tnum text-3xl font-bold text-chrome">{fmtNum(monthPieces)}</div>
-          <div className="text-xs text-muted mt-1">Pieces this month</div>
-        </Card>
-      </div>
-
-      {/* Last 15 days — RAW MATERIAL (in/out) */}
-      <Card className="p-4">
-        <FieldLabel>Raw material — last 15 days</FieldLabel>
-        <div className="mt-2 text-sm space-y-1">
-          <div className="text-xs font-bold text-muted uppercase mt-1">Sent to molders (OUT)</div>
-          <Row label="Compound" val={`${fmtNum(last15.rawOut.compoundKg)} kg`} />
-          <Row label="Masterbatch" val={`${fmtNum(last15.rawOut.mbKg)} kg`} />
-          <Row label="Nuts" val={fmtNum(last15.rawOut.nuts)} />
-          <div className="text-xs font-bold text-muted uppercase mt-2">Returned (IN)</div>
-          <Row label="Regrind (runner + rejects)" val={`${fmtNum(last15.rawIn.regrindKg)} kg`} />
-          <Row label="Burnt loss" val={`${fmtNum(last15.rawIn.burntKg)} kg`} />
-          <Row label="Returned by molder (compound + regrind)" val={`${fmtNum(last15.rawIn.returnedKg)} kg`} />
-          <Row label="Nuts returned" val={fmtNum(last15.rawIn.returnedNuts)} />
-        </div>
-      </Card>
-
-      {/* Last 15 days — FINAL PRODUCT */}
-      <Card className="p-4">
-        <FieldLabel>Final product — last 15 days</FieldLabel>
-        <div className="mt-2 text-sm space-y-1">
-          {Object.keys(last15.prodMap).length === 0 && <p className="text-muted">No production in the last 15 days.</p>}
-          {products.filter(p => last15.prodMap[p.id]).map(p => (
-            <Row key={p.id} label={p.name} val={`${fmtNum(last15.prodMap[p.id])} pcs`} />
-          ))}
-        </div>
-      </Card>
-
-      {/* Rejections — last 15 days (QC; pieces only, manager-safe) */}
+      {/* Rejections — last 15 days (QC) */}
       <Card className="p-4">
         <div className="flex items-center justify-between">
           <FieldLabel>Rejections — last 15 days</FieldLabel>
@@ -172,98 +98,41 @@ export default function Dashboard({ owner }) {
         )}
       </Card>
 
-      {/* Cost per piece (owner only — managers don't see money) */}
-      {owner && (
+      {/* Last 15 days — RAW MATERIAL (in/out) */}
       <Card className="p-4">
-        <FieldLabel>Cost per piece</FieldLabel>
-        <div className="mt-2 space-y-2">
-          {products.filter(p => (Number(p.gPerPiece) || 0) > 0).map(p => {
-            const mat = productMaterialCost(p, masters)
-            return (
-              <div key={p.id} className="flex items-center justify-between text-sm">
-                <span className="font-semibold text-chrome">{p.name}</span>
-                <span className="text-right">
-                  <span className="text-muted text-xs mr-2">material ₹{mat.total.toFixed(2)}</span>
-                  <span className="font-mono font-bold text-amber">
-                    {lastCost[p.id] != null ? `₹${lastCost[p.id].toFixed(2)}/pc` : '—'}
-                  </span>
-                </span>
-              </div>
-            )
-          })}
-          <p className="text-xs text-muted pt-1">Full cost includes the job-work share, which depends on shift output. Shown value = last actual.</p>
-        </div>
-      </Card>
-      )}
-
-      {/* Molder balances */}
-      <Card className="p-4">
-        <FieldLabel>Molder balances</FieldLabel>
-        <div className="mt-2 space-y-3">
-          {balances.length === 0 && <p className="text-sm text-muted">No activity yet. Issue material and record production to begin.</p>}
-          {balances.map(b => {
-            const h = molderHisab(b.molderId, masters, data)
-            return (
-              <div key={b.molderId} className="border border-hairline rounded-xl p-3">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-chrome">{b.molder?.name || '(molder)'}</span>
-                  {b.flag && <span className="text-xs bg-signal-red/15 text-signal-red font-bold px-2 py-0.5 rounded-full">🚩 check material</span>}
-                </div>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2 text-sm">
-                  <Row label="Compound bal." val={`${fmtNum(b.balanceKg)} kg`} />
-                  <Row label="Nuts bal." val={fmtNum(b.nutBalance)} />
-                  <Row label="Regrind back" val={`${fmtNum(b.regrindKg)} kg`} />
-                  <Row label="Burnt loss" val={`${fmtNum(b.burntKg)} kg`} />
-                  <Row label="Pieces" val={fmtNum(b.goodPieces)} />
-                  {owner && <Row label={h.balance >= 0 ? 'We owe' : 'Owes us'} val={`₹${fmtNum(Math.abs(h.balance))}`} bold />}
-                </div>
-                {b.expectedPieces > 0 && (
-                  <div className="mt-3">
-                    <div className="flex justify-between text-xs mb-1">
-                      <span className="text-muted">Yield: {fmtNum(b.producedPieces)} made / ≈{fmtNum(b.expectedPieces)} expected</span>
-                      <span className="font-bold text-amber">≈{fmtNum(b.pendingPieces)} pending</span>
-                    </div>
-                    <div className="h-2.5 bg-hairline rounded-full overflow-hidden">
-                      <div className="h-full bg-amber rounded-full"
-                        style={{ width: `${Math.min(100, Math.round((b.producedPieces / b.expectedPieces) * 100))}%` }} />
-                    </div>
-                  </div>
-                )}
-              </div>
-            )
-          })}
+        <FieldLabel>Raw material — last 15 days</FieldLabel>
+        <div className="mt-2 text-sm space-y-1">
+          <div className="text-xs font-bold text-muted uppercase mt-1">Sent to molders (OUT)</div>
+          <Row label="Compound" val={`${fmtNum(last15.rawOut.compoundKg)} kg`} />
+          <Row label="Masterbatch" val={`${fmtNum(last15.rawOut.mbKg)} kg`} />
+          <Row label="Nuts" val={fmtNum(last15.rawOut.nuts)} />
+          <div className="text-xs font-bold text-muted uppercase mt-2">Returned (IN)</div>
+          <Row label="Regrind (runner + rejects)" val={`${fmtNum(last15.rawIn.regrindKg)} kg`} />
+          <Row label="Burnt loss" val={`${fmtNum(last15.rawIn.burntKg)} kg`} />
+          <Row label="Returned by molder (compound + regrind)" val={`${fmtNum(last15.rawIn.returnedKg)} kg`} />
+          <Row label="Nuts returned" val={fmtNum(last15.rawIn.returnedNuts)} />
         </div>
       </Card>
 
-      {/* Make vs buy (owner only) */}
-      {owner && (
-      <Card className={`p-4 ${buyVerdict === 'buy' ? '!bg-signal-green/10 !border-signal-green/30' : '!bg-graphite'}`}>
-        <FieldLabel>Buy the machine? (break-even)</FieldLabel>
-        {inhousePerPiece == null ? (
-          <p className="text-sm text-muted mt-2">Record this month's production to see the in-house vs outsource comparison.</p>
-        ) : (
-          <div className="mt-2 text-sm space-y-1">
-            <Row label="This month pieces" val={fmtNum(monthPieces)} />
-            <Row label="In-house cost/piece" val={`₹${inhousePerPiece.toFixed(2)}`} />
-            <Row label="Outsource cost/piece" val={`₹${E.outsourcePerPiece.toFixed(2)}`} />
-            <div className={`mt-2 font-bold ${buyVerdict === 'buy' ? 'text-signal-green' : 'text-chrome'}`}>
-              {buyVerdict === 'buy'
-                ? '✅ At this volume, owning the machine is cheaper — worth evaluating a purchase.'
-                : '⏳ Keep outsourcing — volume is too low to justify the ₹25L machine yet.'}
-            </div>
-          </div>
-        )}
+      {/* Last 15 days — FINAL PRODUCT */}
+      <Card className="p-4">
+        <FieldLabel>Final product — last 15 days</FieldLabel>
+        <div className="mt-2 text-sm space-y-1">
+          {Object.keys(last15.prodMap).length === 0 && <p className="text-muted">No production in the last 15 days.</p>}
+          {products.filter(p => last15.prodMap[p.id]).map(p => (
+            <Row key={p.id} label={p.name} val={`${fmtNum(last15.prodMap[p.id])} pcs`} />
+          ))}
+        </div>
       </Card>
-      )}
     </div>
   )
 }
 
-function Row({ label, val, bold }) {
+function Row({ label, val }) {
   return (
     <div className="flex justify-between">
       <span className="text-muted">{label}</span>
-      <span className={`font-mono ${bold ? 'font-bold text-amber' : 'text-chrome'}`}>{val}</span>
+      <span className="font-mono text-chrome">{val}</span>
     </div>
   )
 }
