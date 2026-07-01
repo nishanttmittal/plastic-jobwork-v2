@@ -7,7 +7,7 @@
 import { useState, useMemo } from 'react'
 import { usePlastic } from '../PlasticContext'
 import { Button, Card, FieldLabel, Select, NumberInput, DateInput, useToast, Toast } from '../../../core/ui'
-import { todayStr, fmtDate, fmtNum } from '../../../core/utils/format'
+import { todayStr, fmtDate, fmtNum, fmtPcsKg } from '../../../core/utils/format'
 import { molderBalance } from '../logic/reconcile'
 import { molderHisab, buildHisabPdf } from '../logic/hisab'
 import { byId } from '../logic/costing'
@@ -76,11 +76,19 @@ function MolderDetail({ molderId, owner, onBack }) {
 
   const history = useMemo(() => {
     const out = []
-    issues.list.filter(x => x.molderId === molderId).forEach(e => out.push({ t: 'Issued', date: e.date, ca: e.createdAt, v: e.voided, txt: `${fmtNum(e.compoundKg)}kg · ${fmtNum(e.nutQty)} nuts` }))
-    production.list.filter(x => x.molderId === molderId).forEach(e => out.push({ t: 'Production', date: e.date, ca: e.createdAt, v: e.voided, txt: `${e.entryNo || ''} ${fmtNum((e.items || []).reduce((s, i) => s + (Number(i.pieces) || 0), 0))} pcs` }))
-    returns.list.filter(x => x.molderId === molderId).forEach(e => out.push({ t: 'Returned', date: e.date, ca: e.createdAt, v: e.voided, txt: `${fmtNum(e.compoundKg)}kg · ${fmtNum(e.regrindKg)}kg regrind · ${fmtNum(e.nutQty)} nuts` }))
+    const nutG = (e) => byId(masters.inserts, e.insertId)?.weightG || masters.inserts?.[0]?.weightG || 0
+    // pieces shown with weight (kg) — derive an effective g/piece so mixed-product
+    // entries still show the correct total weight in brackets.
+    const prodStr = (e) => {
+      const pcs = (e.items || []).reduce((s, i) => s + (Number(i.pieces) || 0), 0)
+      const kg = (e.items || []).reduce((s, i) => s + (Number(i.pieces) || 0) * (byId(masters.products, i.productId)?.finishedPieceG || 0) / 1000, 0)
+      return `${fmtPcsKg(pcs, pcs > 0 ? kg * 1000 / pcs : 0)} pcs`
+    }
+    issues.list.filter(x => x.molderId === molderId).forEach(e => out.push({ t: 'Issued', date: e.date, ca: e.createdAt, v: e.voided, txt: `${fmtNum(e.compoundKg)}kg · ${fmtPcsKg(e.nutQty, nutG(e))} nuts` }))
+    production.list.filter(x => x.molderId === molderId).forEach(e => out.push({ t: 'Production', date: e.date, ca: e.createdAt, v: e.voided, txt: `${e.entryNo || ''} ${prodStr(e)}` }))
+    returns.list.filter(x => x.molderId === molderId).forEach(e => out.push({ t: 'Returned', date: e.date, ca: e.createdAt, v: e.voided, txt: `${fmtNum(e.compoundKg)}kg · ${fmtNum(e.regrindKg)}kg regrind · ${fmtPcsKg(e.nutQty, nutG(e))} nuts` }))
     return out.sort((a, z) => a.date !== z.date ? (a.date < z.date ? 1 : -1) : (z.ca || '').localeCompare(a.ca || '')).slice(0, 20)
-  }, [molderId, issues.list, production.list, returns.list, molder])
+  }, [molderId, issues.list, production.list, returns.list, molder, masters])
 
   const addPayment = () => {
     if (!(Number(amount) > 0)) { show('Enter an amount', 1800); return }

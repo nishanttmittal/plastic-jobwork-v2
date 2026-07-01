@@ -8,10 +8,11 @@ import { productMaterialCost, jobWorkTotal } from '../costing'
 import { netPlasticPerPieceG, nutsPerPiece } from '../reconcile'
 import { lotReconciliation } from '../lot'
 import { materialStock } from '../stock'
+import { fmtPcsKg } from '../../../../core/utils/format'
 
 const kuppa = {
   id: 'prd_cap', name: 'Kuppa', compoundId: 'cmp_pp',
-  gPerPiece: 38.9, netPartG: 36, cavities: 4,
+  gPerPiece: 38.9, netPartG: 36, finishedPieceG: 45, cavities: 4,
   inserts: [{ insertId: 'nut_a', qty: 1 }],
 }
 const masters = {
@@ -46,6 +47,17 @@ describe('lot KUPPA-01', () => {
   const r = lotReconciliation('KUPPA-01', masters, data)
   it('nut balance = 524 (18000 − 11928 used − 5548 returned)', () => expect(r.nutBalance).toBe(524))
   it('no over-consumption flag', () => expect(r.flag).toBe(false))
+  it('exposes grams/piece for the weight-in-brackets display', () => {
+    expect(r.nutWeightG).toBe(8.3)   // nut master weight
+    expect(r.pieceG).toBe(45)        // finished Kuppa piece (incl nut)
+  })
+})
+
+describe('fmtPcsKg — pieces shown with weight in brackets (owner rule 2026-07-01)', () => {
+  it('nuts: 18,072 @ 8.3 g → "18,072 (150 kg)"', () => expect(fmtPcsKg(18072, 8.3)).toBe('18,072 (150 kg)'))
+  it('pieces: 11,928 @ 45 g → "11,928 (537 kg)"', () => expect(fmtPcsKg(11928, 45)).toBe('11,928 (537 kg)'))
+  it('small qty gets 2 decimals: 100 @ 8.3 g → "100 (0.83 kg)"', () => expect(fmtPcsKg(100, 8.3)).toBe('100 (0.83 kg)'))
+  it('no weight known → plain count', () => expect(fmtPcsKg(5000, 0)).toBe('5,000'))
 })
 
 describe('no-nut lot (Knob) must not borrow another product’s nut', () => {

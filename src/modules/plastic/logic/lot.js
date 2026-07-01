@@ -158,6 +158,10 @@ export function lotReconciliation(lotNo, masters, data) {
   return {
     lotNo, molder, molderId, compoundName, firstDate: issues[0]?.date || prod[0]?.date || '',
     hasData: issues.length + prod.length + rets.length > 0,
+    // grams/piece for the "pieces (kg)" display rule (owner 2026-07-01):
+    // nut weight for nut movements, finished-piece weight for produced pieces.
+    nutWeightG: num(byId(masters.inserts, insertId)?.weightG),
+    pieceG: num(lotProduct?.finishedPieceG),
     sent: { compoundKg, nutsSent, mbKg, cmpRate, nutRate },
     received: { goodPieces, rejectPieces, runnerKg, rejectsKg, burntKg, finishedKg, plasticInProductsKg, nutsUsed, shifts, hoursRun, machineShots, machinePieces },
     efficiency,

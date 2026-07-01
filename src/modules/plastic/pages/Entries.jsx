@@ -13,7 +13,7 @@
 import { useMemo, useState } from 'react'
 import { usePlastic } from '../PlasticContext'
 import { Card, FieldLabel, Select, Button, DateInput, NumberInput } from '../../../core/ui'
-import { fmtDate, fmtNum } from '../../../core/utils/format'
+import { fmtDate, fmtNum, fmtPcsKg } from '../../../core/utils/format'
 import { byId } from '../logic/costing'
 import { isLotFinalized } from '../logic/lot'
 
@@ -46,19 +46,21 @@ export default function Entries({ owner }) {
 
   const rows = useMemo(() => {
     const mName = (id) => byId(molders, id)?.name || '(molder)'
+    // nut weight for the "nuts (kg)" display — the entry's own insert, else the first nut master
+    const nutG = (e) => byId(masters.inserts, e.insertId)?.weightG || masters.inserts?.[0]?.weightG || 0
     const list = []
 
     for (const e of issues.list) {
       const bits = []
       if (Number(e.compoundKg) > 0) bits.push(`${fmtNum(e.compoundKg)} kg compound`)
       if (Number(e.mbKg) > 0) bits.push(`${fmtNum(e.mbKg)} kg MB`)
-      if (Number(e.nutQty) > 0) bits.push(`${fmtNum(e.nutQty)} nuts`)
+      if (Number(e.nutQty) > 0) bits.push(`${fmtPcsKg(e.nutQty, nutG(e))} nuts`)
       list.push({ kind: 'issue', id: e.id, date: e.date, molder: mName(e.molderId),
         title: bits.join(' · ') || 'issue', voided: !!e.voided, ref: issues, raw: e })
     }
     for (const e of production.list) {
       const pcs = (e.items || []).reduce((s, it) => s + (Number(it.pieces) || 0), 0)
-      const names = (e.items || []).map(it => `${byId(masters.products, it.productId)?.name || 'product'} ${fmtNum(it.pieces)}`).join(', ')
+      const names = (e.items || []).map(it => `${byId(masters.products, it.productId)?.name || 'product'} ${fmtPcsKg(it.pieces, byId(masters.products, it.productId)?.finishedPieceG)}`).join(', ')
       list.push({ kind: 'production', id: e.id, date: e.date, molder: mName(e.molderId),
         title: `${e.entryNo ? e.entryNo + ' · ' : ''}${names || fmtNum(pcs) + ' pcs'}`, voided: !!e.voided, ref: production, raw: e })
     }
@@ -66,7 +68,7 @@ export default function Entries({ owner }) {
       const bits = []
       if (Number(e.compoundKg) > 0) bits.push(`${fmtNum(e.compoundKg)} kg compound`)
       if (Number(e.regrindKg) > 0) bits.push(`${fmtNum(e.regrindKg)} kg regrind`)
-      if (Number(e.nutQty) > 0) bits.push(`${fmtNum(e.nutQty)} nuts`)
+      if (Number(e.nutQty) > 0) bits.push(`${fmtPcsKg(e.nutQty, nutG(e))} nuts`)
       list.push({ kind: 'return', id: e.id, date: e.date, molder: mName(e.molderId),
         title: bits.join(' · ') || 'return', voided: !!e.voided, ref: returns, raw: e })
     }

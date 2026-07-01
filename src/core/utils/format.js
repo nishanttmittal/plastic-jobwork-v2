@@ -32,6 +32,21 @@ export const fmtDate = (iso) => {
 export const fmtNum = (n) => Math.round(Number(n) || 0).toLocaleString('en-IN')
 
 /**
+ * A piece count with its weight equivalent in brackets — the owner's standing
+ * rule: material moving in/out is tracked by weight, shown as "pieces (kg)".
+ * e.g. fmtPcsKg(18072, 8.3) → "18,072 (150 kg)". When gPerPiece is unknown
+ * (0/undefined) it degrades to a plain count, so callers stay safe.
+ */
+export const fmtPcsKg = (pieces, gPerPiece) => {
+  const p = Math.round(Number(pieces) || 0)
+  const g = Number(gPerPiece) || 0
+  if (!g) return fmtNum(p)
+  const kg = (p * g) / 1000
+  const kgStr = kg >= 100 ? fmtNum(kg) : kg.toFixed(kg < 10 ? 2 : 1)
+  return `${fmtNum(p)} (${kgStr} kg)`
+}
+
+/**
  * Canonicalise a product name so the SAME physical product always matches as one
  * string across apps. The welder app emits curly inch/foot marks (e.g. 17”)
  * while this app uses straight quotes (17"); without this they'd be treated as
