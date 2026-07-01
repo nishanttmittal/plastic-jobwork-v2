@@ -26,9 +26,11 @@ export default function ReturnMaterial() {
   const [regrindKg, setRegrindKg] = useState('')
   const [insertId, setInsertId] = useState('')
   const [nutKg, setNutKg] = useState('')
+  const [nutWtG, setNutWtG] = useState('')   // per-lot nut weight override (blank = use master)
   const [note, setNote] = useState('')
 
-  const nutWeightG = Number(byId(inserts, insertId)?.weightG) || 0
+  const masterNutG = Number(byId(inserts, insertId)?.weightG) || 0
+  const nutWeightG = Number(nutWtG) > 0 ? Number(nutWtG) : masterNutG
   const derivedNutQty = (Number(nutKg) > 0 && nutWeightG > 0) ? Math.round(Number(nutKg) * 1000 / nutWeightG) : 0
 
   const molderOpts = molders.map(m => ({ value: m.id, label: m.name }))
@@ -50,13 +52,13 @@ export default function ReturnMaterial() {
       date, molderId, lotNo,
       compoundId, compoundKg: Number(compoundKg) || 0,
       regrindKg: Number(regrindKg) || 0,
-      insertId, nutKg: Number(nutKg) || 0, nutQty: derivedNutQty,
+      insertId, nutKg: Number(nutKg) || 0, nutQty: derivedNutQty, nutWeightG,
       note, voided: false, createdAt: new Date().toISOString(),
     })
     const m = byId(molders, molderId)
     log('RETURN', `${m?.name || molderId} · ${fmtNum(compoundKg) || 0}kg compound · ${fmtNum(regrindKg) || 0}kg regrind · ${fmtNum(nutKg) || 0}kg (${fmtNum(derivedNutQty)}) nuts`)
     show('✅ Material received back', 2000)
-    setCompoundKg(''); setRegrindKg(''); setNutKg(''); setNote('')
+    setCompoundKg(''); setRegrindKg(''); setNutKg(''); setNutWtG(''); setNote('')
   }
 
   return (
@@ -104,6 +106,10 @@ export default function ReturnMaterial() {
           <div>
             <span className="text-xs font-semibold text-signal-red">Nuts — weight (kg) · required when nuts come back *</span>
             <NumberInput value={nutKg} onChange={e => setNutKg(e.target.value)} placeholder="0" className="mt-1" />
+            <div className="mt-2">
+              <span className="text-xs text-muted">Nut weight this lot (g each) — change only if this batch differs</span>
+              <NumberInput value={nutWtG} onChange={e => setNutWtG(e.target.value)} placeholder={masterNutG ? String(masterNutG) : '0'} className="mt-1" />
+            </div>
             {derivedNutQty > 0 && (
               <div className="mt-1 bg-graphite border border-hairline text-chrome rounded-xl px-3 py-2 text-sm font-semibold">
                 ≈ <b>{fmtNum(derivedNutQty)}</b> nuts (at {fmtNum(nutWeightG)} g each)

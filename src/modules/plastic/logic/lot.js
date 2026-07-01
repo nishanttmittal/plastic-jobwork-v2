@@ -93,6 +93,7 @@ export function lotReconciliation(lotNo, masters, data) {
   // ── SENT (raw material handed to the molder for this lot) ──
   const compoundKg = round2(issues.reduce((s, i) => s + num(i.compoundKg), 0))
   const nutsSent = issues.reduce((s, i) => s + num(i.nutQty), 0)
+  const nutsSentKg = round2(issues.reduce((s, i) => s + num(i.nutKg), 0))
   const mbKg = round2(issues.reduce((s, i) => s + num(i.mbKg), 0))
   const compoundId = issues.find(i => i.compoundId)?.compoundId || lotProduct?.compoundId
   const cmpRate = num(byId(masters.compounds, compoundId)?.rate)
@@ -125,6 +126,7 @@ export function lotReconciliation(lotNo, masters, data) {
   const returnedCompoundKg = round2(rets.reduce((s, r) => s + num(r.compoundKg), 0))
   const returnedRegrindKg = round2(rets.reduce((s, r) => s + num(r.regrindKg), 0))
   const returnedNuts = rets.reduce((s, r) => s + num(r.nutQty), 0)
+  const returnedNutsKg = round2(rets.reduce((s, r) => s + num(r.nutKg), 0))
 
   // Recoverable regrind = runner + rejects + loose regrind handed back.
   const regrindKg = round2(runnerKg + rejectsKg + returnedRegrindKg)
@@ -159,9 +161,16 @@ export function lotReconciliation(lotNo, masters, data) {
     lotNo, molder, molderId, compoundName, firstDate: issues[0]?.date || prod[0]?.date || '',
     hasData: issues.length + prod.length + rets.length > 0,
     // grams/piece for the "pieces (kg)" display rule (owner 2026-07-01):
-    // nut weight for nut movements, finished-piece weight for produced pieces.
-    nutWeightG: num(byId(masters.inserts, insertId)?.weightG),
+    // finished-piece weight for produced pieces; nut movements use the ACTUAL
+    // weighed kg (nut size differs lot to lot), with a per-lot average g/nut for
+    // the residual balance. Falls back to the master weight when a lot pre-dates
+    // per-entry nut weights.
     pieceG: num(lotProduct?.finishedPieceG),
+    nutWeightG: num(byId(masters.inserts, insertId)?.weightG),
+    nutsSentKg,
+    returnedNutsKg,
+    nutBalanceKg: round2(((nutsSent - nutsUsed - returnedNuts) *
+      (nutsSent > 0 && nutsSentKg > 0 ? (nutsSentKg * 1000) / nutsSent : num(byId(masters.inserts, insertId)?.weightG))) / 1000),
     sent: { compoundKg, nutsSent, mbKg, cmpRate, nutRate },
     received: { goodPieces, rejectPieces, runnerKg, rejectsKg, burntKg, finishedKg, plasticInProductsKg, nutsUsed, shifts, hoursRun, machineShots, machinePieces },
     efficiency,

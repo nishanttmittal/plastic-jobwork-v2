@@ -54,12 +54,14 @@ export function molderBalance(molderId, data) {
 
   const issuedKg = round2(issues.reduce((s, i) => s + (Number(i.compoundKg) || 0), 0))
   const nutsIssued = issues.reduce((s, i) => s + (Number(i.nutQty) || 0), 0)
+  const nutsIssuedKg = round2(issues.reduce((s, i) => s + (Number(i.nutKg) || 0), 0))
   const mbIssuedKg = round2(issues.reduce((s, i) => s + (Number(i.mbKg) || 0), 0))
 
   // Material the molder physically handed back (reduces what's still with him).
   const returnedCompoundKg = round2(returns.reduce((s, r) => s + (Number(r.compoundKg) || 0), 0))
   const returnedRegrindKg = round2(returns.reduce((s, r) => s + (Number(r.regrindKg) || 0), 0))
   const returnedNuts = returns.reduce((s, r) => s + (Number(r.nutQty) || 0), 0)
+  const returnedNutsKg = round2(returns.reduce((s, r) => s + (Number(r.nutKg) || 0), 0))
   const returnedKg = round2(returnedCompoundKg + returnedRegrindKg)
 
   let plasticInProductsKg = 0
@@ -101,15 +103,22 @@ export function molderBalance(molderId, data) {
   const producedPieces = goodPieces
   const pendingPieces = Math.max(0, expectedPieces - producedPieces)
 
+  // Nut weight can differ lot to lot, so the true weight lives on each entry
+  // (nutKg). Average g/nut from what was issued lets us show a kg equivalent for
+  // the residual balance count. Falls back to 0 (count-only) when unknown.
+  const nutBalance = nutsIssued - nutsUsed - returnedNuts
+  const avgNutG = nutsIssued > 0 ? (nutsIssuedKg * 1000) / nutsIssued : 0
+  const nutBalanceKg = round2((nutBalance * avgNutG) / 1000)
+
   return {
     molderId,
     issuedKg, mbIssuedKg,
     plasticInProductsKg, runnerKg, rejectsKg, burntKg,
-    returnedCompoundKg, returnedRegrindKg, returnedKg, returnedNuts,
+    returnedCompoundKg, returnedRegrindKg, returnedKg, returnedNuts, returnedNutsKg,
     accountedKg, balanceKg, regrindKg,
     goodPieces,
     expectedPieces, producedPieces, pendingPieces,
-    nutsIssued, nutsUsed, nutBalance: nutsIssued - nutsUsed - returnedNuts,
+    nutsIssued, nutsIssuedKg, nutsUsed, nutBalance, avgNutG, nutBalanceKg,
     flag: balanceKg < -RECON_TOLERANCE_KG,
   }
 }

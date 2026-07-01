@@ -32,19 +32,27 @@ export const fmtDate = (iso) => {
 export const fmtNum = (n) => Math.round(Number(n) || 0).toLocaleString('en-IN')
 
 /**
- * A piece count with its weight equivalent in brackets — the owner's standing
- * rule: material moving in/out is tracked by weight, shown as "pieces (kg)".
- * e.g. fmtPcsKg(18072, 8.3) → "18,072 (150 kg)". When gPerPiece is unknown
- * (0/undefined) it degrades to a plain count, so callers stay safe.
+ * A count with an explicit weight (kg) in brackets — the owner's standing rule:
+ * material moving in/out is tracked by weight, shown as "count (kg)".
+ * e.g. fmtCountKg(18072, 150) → "18,072 (150 kg)". Prefer this for NUTS, whose
+ * weight is stored per entry (nut size differs lot to lot). kg 0/undefined →
+ * plain count, so callers stay safe.
  */
-export const fmtPcsKg = (pieces, gPerPiece) => {
-  const p = Math.round(Number(pieces) || 0)
-  const g = Number(gPerPiece) || 0
-  if (!g) return fmtNum(p)
-  const kg = (p * g) / 1000
-  const kgStr = kg >= 100 ? fmtNum(kg) : kg.toFixed(kg < 10 ? 2 : 1)
-  return `${fmtNum(p)} (${kgStr} kg)`
+export const fmtCountKg = (count, kg) => {
+  const c = Math.round(Number(count) || 0)
+  const k = Number(kg) || 0
+  if (!k) return fmtNum(c)
+  const kgStr = k >= 100 ? fmtNum(k) : k.toFixed(k < 10 ? 2 : 1)
+  return `${fmtNum(c)} (${kgStr} kg)`
 }
+
+/**
+ * A piece count with its weight derived from a fixed grams-per-piece — use for
+ * FINISHED PIECES (weight per piece is constant per product).
+ * e.g. fmtPcsKg(11928, 45) → "11,928 (537 kg)".
+ */
+export const fmtPcsKg = (pieces, gPerPiece) =>
+  fmtCountKg(pieces, ((Math.round(Number(pieces) || 0)) * (Number(gPerPiece) || 0)) / 1000)
 
 /**
  * Canonicalise a product name so the SAME physical product always matches as one

@@ -6,7 +6,7 @@
 import { useMemo } from 'react'
 import { usePlastic } from '../PlasticContext'
 import { InstrumentCard, Readout, StatusPip } from '../../../core/ui'
-import { todayStr, fmtNum, fmtPcsKg } from '../../../core/utils/format'
+import { todayStr, fmtNum, fmtPcsKg, fmtCountKg } from '../../../core/utils/format'
 import { molderHisab } from '../logic/hisab'
 import { materialStock } from '../logic/stock'
 import { lotList, lotReconciliation, isLotFinalized } from '../logic/lot'
@@ -48,9 +48,10 @@ export default function Home({ owner, onOpen }) {
     pieces: a.pieces + Math.max(0, r.pendingPieces || 0),
     nuts: a.nuts + Math.max(0, r.nutBalance || 0),
     kg: Math.round((a.kg + Math.max(0, r.balanceKg || 0)) * 10) / 10,
-    // weight equivalents for the "pieces (kg)" rule (owner 2026-07-01)
+    // weight equivalents for the "pieces (kg)" rule (owner 2026-07-01); nuts use
+    // the true per-lot weighed kg (nut size differs lot to lot)
     pcsKg: a.pcsKg + (Math.max(0, r.pendingPieces || 0) * (r.pieceG || 0)) / 1000,
-    nutsKg: a.nutsKg + (Math.max(0, r.nutBalance || 0) * (r.nutWeightG || 0)) / 1000,
+    nutsKg: a.nutsKg + Math.max(0, r.nutBalanceKg || 0),
   }), { pieces: 0, nuts: 0, kg: 0, pcsKg: 0, nutsKg: 0 })
   const alerts = openLots.filter(r => r.flag)
 
@@ -108,7 +109,7 @@ export default function Home({ owner, onOpen }) {
                     <span className="text-muted truncate">{[r.compoundName, r.molder?.name].filter(Boolean).join(' · ')}</span>
                   </span>
                   <span className="font-mono tnum text-xs text-muted shrink-0 text-right">
-                    {r.pendingPieces > 0 ? `${fmtPcsKg(r.pendingPieces, r.pieceG)} pcs · ` : ''}{r.nutBalance > 0 ? `${fmtPcsKg(r.nutBalance, r.nutWeightG)} nuts · ` : ''}{r.balanceKg > 0.5 ? `${fmtNum(r.balanceKg)} kg` : ''}
+                    {r.pendingPieces > 0 ? `${fmtPcsKg(r.pendingPieces, r.pieceG)} pcs · ` : ''}{r.nutBalance > 0 ? `${fmtCountKg(r.nutBalance, r.nutBalanceKg)} nuts · ` : ''}{r.balanceKg > 0.5 ? `${fmtNum(r.balanceKg)} kg` : ''}
                   </span>
                 </div>
               ))}

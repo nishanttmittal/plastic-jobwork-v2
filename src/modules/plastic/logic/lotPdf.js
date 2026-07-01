@@ -2,7 +2,7 @@
  * Lot reconciliation PDF — a one-page "raw material sent vs received" report
  * for one lot, shareable on WhatsApp. Mirrors the Hisab PDF style.
  */
-import { fmtDate, fmtNum, fmtPcsKg } from '../../../core/utils/format'
+import { fmtDate, fmtNum, fmtPcsKg, fmtCountKg } from '../../../core/utils/format'
 
 // Per-piece costs need paise (fmtNum rounds to whole rupees → ₹1.50 became ₹2).
 const rupee2 = (n) => (Number(n) || 0).toFixed(2)
@@ -31,7 +31,7 @@ export async function buildLotPdf(lotNo, masters, data) {
     head: [['Raw material SENT', 'Qty']],
     body: [
       ['Compound (PP)', `${fmtNum(r.sent.compoundKg)} kg  @ Rs ${fmtNum(r.sent.cmpRate)}/kg`],
-      ...(r.sent.nutsSent > 0 ? [['Nuts', `${fmtPcsKg(r.sent.nutsSent, r.nutWeightG)}  @ Rs ${rupee2(r.sent.nutRate)}`]] : []),
+      ...(r.sent.nutsSent > 0 ? [['Nuts', `${fmtCountKg(r.sent.nutsSent, r.nutsSentKg)}  @ Rs ${rupee2(r.sent.nutRate)}`]] : []),
       ...(r.sent.mbKg > 0 ? [['Masterbatch', `${fmtNum(r.sent.mbKg)} kg`]] : []),
     ],
     styles: { fontSize: 9 }, headStyles: { fillColor: teal },
@@ -48,7 +48,7 @@ export async function buildLotPdf(lotNo, masters, data) {
       ['Runner returned', `${fmtNum(r.received.runnerKg)} kg`],
       ['Rejects returned', `${fmtNum(r.received.rejectsKg)} kg`],
       ['Burnt / purge loss', `${fmtNum(r.received.burntKg)} kg`],
-      ['Loose nuts returned', fmtPcsKg(r.returned.nuts, r.nutWeightG)],
+      ['Loose nuts returned', fmtCountKg(r.returned.nuts, r.returnedNutsKg)],
       ['Finished weight (weighed)', `${fmtNum(r.received.finishedKg)} kg`],
     ],
     styles: { fontSize: 9 }, headStyles: { fillColor: teal },
@@ -64,7 +64,7 @@ export async function buildLotPdf(lotNo, masters, data) {
       ['Unaccounted / still with molder', `${fmtNum(r.balanceKg)} kg`],
       ['Material loss', `${fmtNum(r.lossPct)} %`],
       ['Recoverable regrind', `${fmtNum(r.regrindKg)} kg`],
-      ['Nut balance', fmtPcsKg(r.nutBalance, r.nutWeightG)],
+      ['Nut balance', fmtCountKg(r.nutBalance, r.nutBalanceKg)],
     ],
     styles: { fontSize: 9 }, headStyles: { fillColor: r.flag ? [185, 28, 28] : teal },
   })

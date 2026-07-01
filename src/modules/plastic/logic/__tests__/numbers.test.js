@@ -8,7 +8,8 @@ import { productMaterialCost, jobWorkTotal } from '../costing'
 import { netPlasticPerPieceG, nutsPerPiece } from '../reconcile'
 import { lotReconciliation } from '../lot'
 import { materialStock } from '../stock'
-import { fmtPcsKg } from '../../../../core/utils/format'
+import { molderBalance } from '../reconcile'
+import { fmtPcsKg, fmtCountKg } from '../../../../core/utils/format'
 
 const kuppa = {
   id: 'prd_cap', name: 'Kuppa', compoundId: 'cmp_pp',
@@ -22,9 +23,10 @@ const masters = {
   products: [kuppa], masterbatch: [],
 }
 const data = {
-  issues: [{ lotNo: 'KUPPA-01', molderId: 'mld_1', compoundId: 'cmp_pp', compoundKg: 450, productId: 'prd_cap', insertId: 'nut_a', nutQty: 18000 }],
+  // nuts recorded BY WEIGHT (owner rule): 150 kg @ 8.3 g = 18,072; 46.05 kg = 5,548 back
+  issues: [{ lotNo: 'KUPPA-01', molderId: 'mld_1', compoundId: 'cmp_pp', compoundKg: 450, productId: 'prd_cap', insertId: 'nut_a', nutKg: 150, nutQty: 18072 }],
   production: [{ lotNo: 'KUPPA-01', molderId: 'mld_1', hours: 42.5, items: [{ productId: 'prd_cap', pieces: 11928, rejects: 0 }] }],
-  returns: [{ lotNo: 'KUPPA-01', insertId: 'nut_a', nutQty: 5548 }],
+  returns: [{ lotNo: 'KUPPA-01', molderId: 'mld_1', insertId: 'nut_a', nutKg: 46.05, nutQty: 5548 }],
 }
 
 describe('costing', () => {
@@ -45,19 +47,34 @@ describe('reconcile', () => {
 
 describe('lot KUPPA-01', () => {
   const r = lotReconciliation('KUPPA-01', masters, data)
-  it('nut balance = 524 (18000 − 11928 used − 5548 returned)', () => expect(r.nutBalance).toBe(524))
+  it('nut balance = 596 (18072 − 11928 used − 5548 returned)', () => expect(r.nutBalance).toBe(596))
   it('no over-consumption flag', () => expect(r.flag).toBe(false))
   it('exposes grams/piece for the weight-in-brackets display', () => {
-    expect(r.nutWeightG).toBe(8.3)   // nut master weight
+    expect(r.nutWeightG).toBe(8.3)   // nut master weight (fallback)
     expect(r.pieceG).toBe(45)        // finished Kuppa piece (incl nut)
+  })
+  it('nuts shown by TRUE weighed kg (differs lot to lot)', () => {
+    expect(r.nutsSentKg).toBe(150)          // actual weighed supply
+    expect(r.returnedNutsKg).toBeCloseTo(46.05, 2)
+    expect(r.nutBalanceKg).toBeCloseTo(4.95, 1) // 596 × 8.3 g avg
   })
 })
 
-describe('fmtPcsKg — pieces shown with weight in brackets (owner rule 2026-07-01)', () => {
-  it('nuts: 18,072 @ 8.3 g → "18,072 (150 kg)"', () => expect(fmtPcsKg(18072, 8.3)).toBe('18,072 (150 kg)'))
-  it('pieces: 11,928 @ 45 g → "11,928 (537 kg)"', () => expect(fmtPcsKg(11928, 45)).toBe('11,928 (537 kg)'))
-  it('small qty gets 2 decimals: 100 @ 8.3 g → "100 (0.83 kg)"', () => expect(fmtPcsKg(100, 8.3)).toBe('100 (0.83 kg)'))
-  it('no weight known → plain count', () => expect(fmtPcsKg(5000, 0)).toBe('5,000'))
+describe('molderBalance nut weight (per-lot weighed kg)', () => {
+  const b = molderBalance('mld_1', { issues: data.issues, production: data.production, returns: data.returns, products: masters.products })
+  it('nuts issued kg = 150, balance kg ≈ 4.95', () => {
+    expect(b.nutsIssuedKg).toBe(150)
+    expect(b.nutBalance).toBe(596)
+    expect(b.nutBalanceKg).toBeCloseTo(4.95, 1)
+  })
+})
+
+describe('weight-in-brackets formatters (owner rule 2026-07-01)', () => {
+  it('fmtCountKg nuts by true kg: 18,072 / 150 kg → "18,072 (150 kg)"', () => expect(fmtCountKg(18072, 150)).toBe('18,072 (150 kg)'))
+  it('fmtCountKg small: 596 / 4.95 kg → "596 (4.95 kg)"', () => expect(fmtCountKg(596, 4.95)).toBe('596 (4.95 kg)'))
+  it('fmtCountKg no kg → plain count', () => expect(fmtCountKg(5000, 0)).toBe('5,000'))
+  it('fmtPcsKg pieces: 11,928 @ 45 g → "11,928 (537 kg)"', () => expect(fmtPcsKg(11928, 45)).toBe('11,928 (537 kg)'))
+  it('fmtPcsKg no weight → plain count', () => expect(fmtPcsKg(5000, 0)).toBe('5,000'))
 })
 
 describe('no-nut lot (Knob) must not borrow another product’s nut', () => {
@@ -76,8 +93,8 @@ describe('no-nut lot (Knob) must not borrow another product’s nut', () => {
 })
 
 describe('stock', () => {
-  it('nut stock = +5548 (18000 bought − 18000 issued + 5548 returned)', () => {
-    const purchases = [{ kind: 'nut', materialId: 'nut_a', qty: 18000, rate: 1.5 }]
+  it('nut stock = +5548 (18072 bought − 18072 issued + 5548 returned)', () => {
+    const purchases = [{ kind: 'nut', materialId: 'nut_a', qty: 18072, rate: 1.5 }]
     const nut = materialStock(masters, { purchases, issues: data.issues, returns: data.returns }).inserts[0]
     expect(nut.stock).toBe(5548)
   })

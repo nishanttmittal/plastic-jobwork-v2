@@ -13,7 +13,7 @@
 import { useMemo, useState } from 'react'
 import { usePlastic } from '../PlasticContext'
 import { Card, FieldLabel, Select, Button, DateInput, NumberInput } from '../../../core/ui'
-import { fmtDate, fmtNum, fmtPcsKg } from '../../../core/utils/format'
+import { fmtDate, fmtNum, fmtPcsKg, fmtCountKg } from '../../../core/utils/format'
 import { byId } from '../logic/costing'
 import { isLotFinalized } from '../logic/lot'
 
@@ -46,15 +46,20 @@ export default function Entries({ owner }) {
 
   const rows = useMemo(() => {
     const mName = (id) => byId(molders, id)?.name || '(molder)'
-    // nut weight for the "nuts (kg)" display — the entry's own insert, else the first nut master
-    const nutG = (e) => byId(masters.inserts, e.insertId)?.weightG || masters.inserts?.[0]?.weightG || 0
+    // nut display uses the actual weighed kg stored on the entry (nut size differs
+    // lot to lot); fall back to the master weight for old entries with no nutKg.
+    const nutStr = (e) => {
+      const kg = Number(e.nutKg) > 0 ? Number(e.nutKg)
+        : (Number(e.nutQty) || 0) * (byId(masters.inserts, e.insertId)?.weightG || masters.inserts?.[0]?.weightG || 0) / 1000
+      return `${fmtCountKg(e.nutQty, kg)} nuts`
+    }
     const list = []
 
     for (const e of issues.list) {
       const bits = []
       if (Number(e.compoundKg) > 0) bits.push(`${fmtNum(e.compoundKg)} kg compound`)
       if (Number(e.mbKg) > 0) bits.push(`${fmtNum(e.mbKg)} kg MB`)
-      if (Number(e.nutQty) > 0) bits.push(`${fmtPcsKg(e.nutQty, nutG(e))} nuts`)
+      if (Number(e.nutQty) > 0) bits.push(nutStr(e))
       list.push({ kind: 'issue', id: e.id, date: e.date, molder: mName(e.molderId),
         title: bits.join(' · ') || 'issue', voided: !!e.voided, ref: issues, raw: e })
     }
@@ -68,7 +73,7 @@ export default function Entries({ owner }) {
       const bits = []
       if (Number(e.compoundKg) > 0) bits.push(`${fmtNum(e.compoundKg)} kg compound`)
       if (Number(e.regrindKg) > 0) bits.push(`${fmtNum(e.regrindKg)} kg regrind`)
-      if (Number(e.nutQty) > 0) bits.push(`${fmtPcsKg(e.nutQty, nutG(e))} nuts`)
+      if (Number(e.nutQty) > 0) bits.push(nutStr(e))
       list.push({ kind: 'return', id: e.id, date: e.date, molder: mName(e.molderId),
         title: bits.join(' · ') || 'return', voided: !!e.voided, ref: returns, raw: e })
     }

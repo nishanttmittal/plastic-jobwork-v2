@@ -68,6 +68,9 @@ export const issueSchema = [
   field({ name: 'insertId',   label: 'Nut/Insert', type: 'text',   default: '' }),
   field({ name: 'nutKg',      label: 'Nuts (kg)',  type: 'number', default: 0 }),
   field({ name: 'nutQty',     label: 'Nuts (qty)', type: 'number', default: 0 }),
+  // per-lot nut weight (g/nut) used to convert this supply's kg → count. 0 = use
+  // the master weight. Nut size can differ lot to lot, so we capture it per entry.
+  field({ name: 'nutWeightG', label: 'Nut weight (g)', type: 'number', default: 0 }),
   field({ name: 'note',       label: 'Note',       type: 'text',   default: '' }),
   field({ name: 'voided',     label: 'Voided',     type: 'toggle', default: false }),
 ]
@@ -88,6 +91,7 @@ export const returnSchema = [
   field({ name: 'insertId',   label: 'Nut/Insert', type: 'text',   default: '' }),
   field({ name: 'nutKg',      label: 'Nuts returned (kg)', type: 'number', default: 0 }),
   field({ name: 'nutQty',     label: 'Nuts returned (qty)', type: 'number', default: 0 }),
+  field({ name: 'nutWeightG', label: 'Nut weight (g)', type: 'number', default: 0 }),
   field({ name: 'note',       label: 'Note',       type: 'text',   default: '' }),
   field({ name: 'voided',     label: 'Voided',     type: 'toggle', default: false }),
 ]

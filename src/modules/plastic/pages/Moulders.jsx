@@ -7,7 +7,7 @@
 import { useState, useMemo } from 'react'
 import { usePlastic } from '../PlasticContext'
 import { Button, Card, FieldLabel, Select, NumberInput, DateInput, useToast, Toast } from '../../../core/ui'
-import { todayStr, fmtDate, fmtNum, fmtPcsKg } from '../../../core/utils/format'
+import { todayStr, fmtDate, fmtNum, fmtPcsKg, fmtCountKg } from '../../../core/utils/format'
 import { molderBalance } from '../logic/reconcile'
 import { molderHisab, buildHisabPdf } from '../logic/hisab'
 import { byId } from '../logic/costing'
@@ -36,7 +36,7 @@ export default function Moulders({ owner }) {
                 <div className="mt-2 grid grid-cols-3 gap-2 text-center text-sm">
                   <Mini n={`${fmtNum(b.balanceKg)}kg`} l="material" tone={b.balanceKg < 0 ? 'text-signal-red' : ''} />
                   <Mini n={fmtNum(b.pendingPieces)} l="pending" />
-                  <Mini n={fmtNum(b.nutBalance)} l="nuts" />
+                  <Mini n={fmtNum(b.nutBalance)} l={b.nutBalanceKg > 0 ? `nuts · ${fmtNum(b.nutBalanceKg)} kg` : 'nuts'} />
                 </div>
                 {owner && h && (
                   <div className="mt-2 text-xs text-right text-muted">
@@ -76,7 +76,13 @@ function MolderDetail({ molderId, owner, onBack }) {
 
   const history = useMemo(() => {
     const out = []
-    const nutG = (e) => byId(masters.inserts, e.insertId)?.weightG || masters.inserts?.[0]?.weightG || 0
+    // nuts show the actual weighed kg stored on the entry (nut size differs lot
+    // to lot); fall back to master weight × count for old entries.
+    const nutStr = (e) => {
+      const kg = Number(e.nutKg) > 0 ? Number(e.nutKg)
+        : (Number(e.nutQty) || 0) * (byId(masters.inserts, e.insertId)?.weightG || masters.inserts?.[0]?.weightG || 0) / 1000
+      return `${fmtCountKg(e.nutQty, kg)} nuts`
+    }
     // pieces shown with weight (kg) — derive an effective g/piece so mixed-product
     // entries still show the correct total weight in brackets.
     const prodStr = (e) => {
@@ -84,9 +90,9 @@ function MolderDetail({ molderId, owner, onBack }) {
       const kg = (e.items || []).reduce((s, i) => s + (Number(i.pieces) || 0) * (byId(masters.products, i.productId)?.finishedPieceG || 0) / 1000, 0)
       return `${fmtPcsKg(pcs, pcs > 0 ? kg * 1000 / pcs : 0)} pcs`
     }
-    issues.list.filter(x => x.molderId === molderId).forEach(e => out.push({ t: 'Issued', date: e.date, ca: e.createdAt, v: e.voided, txt: `${fmtNum(e.compoundKg)}kg · ${fmtPcsKg(e.nutQty, nutG(e))} nuts` }))
+    issues.list.filter(x => x.molderId === molderId).forEach(e => out.push({ t: 'Issued', date: e.date, ca: e.createdAt, v: e.voided, txt: `${fmtNum(e.compoundKg)}kg · ${nutStr(e)}` }))
     production.list.filter(x => x.molderId === molderId).forEach(e => out.push({ t: 'Production', date: e.date, ca: e.createdAt, v: e.voided, txt: `${e.entryNo || ''} ${prodStr(e)}` }))
-    returns.list.filter(x => x.molderId === molderId).forEach(e => out.push({ t: 'Returned', date: e.date, ca: e.createdAt, v: e.voided, txt: `${fmtNum(e.compoundKg)}kg · ${fmtNum(e.regrindKg)}kg regrind · ${fmtPcsKg(e.nutQty, nutG(e))} nuts` }))
+    returns.list.filter(x => x.molderId === molderId).forEach(e => out.push({ t: 'Returned', date: e.date, ca: e.createdAt, v: e.voided, txt: `${fmtNum(e.compoundKg)}kg · ${fmtNum(e.regrindKg)}kg regrind · ${nutStr(e)}` }))
     return out.sort((a, z) => a.date !== z.date ? (a.date < z.date ? 1 : -1) : (z.ca || '').localeCompare(a.ca || '')).slice(0, 20)
   }, [molderId, issues.list, production.list, returns.list, molder, masters])
 
@@ -117,7 +123,7 @@ function MolderDetail({ molderId, owner, onBack }) {
           <Row label="Burnt / purge loss" val={`${fmtNum(b.burntKg)} kg`} tone="text-amber" />
           <Row label="Returned unused + regrind" val={`${fmtNum(b.returnedKg)} kg`} />
           <div className="border-t border-hairline pt-1 mt-1"><Row label="Balance with molder" val={`${fmtNum(b.balanceKg)} kg`} bold tone={b.balanceKg < 0 ? 'text-signal-red' : 'text-amber'} /></div>
-          <Row label="Nuts balance" val={fmtNum(b.nutBalance)} />
+          <Row label="Nuts balance" val={fmtCountKg(b.nutBalance, b.nutBalanceKg)} />
           <Row label="Pieces pending (approx)" val={`≈ ${fmtNum(b.pendingPieces)}`} bold tone="text-amber" />
         </div>
       </Card>

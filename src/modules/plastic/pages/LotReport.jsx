@@ -6,7 +6,7 @@
 import { useMemo, useState } from 'react'
 import { usePlastic } from '../PlasticContext'
 import { Card, FieldLabel, Select, Button } from '../../../core/ui'
-import { fmtDate, fmtNum, fmtPcsKg } from '../../../core/utils/format'
+import { fmtDate, fmtNum, fmtPcsKg, fmtCountKg } from '../../../core/utils/format'
 import { lotList, lotReconciliation, isLotFinalized } from '../logic/lot'
 import { jobWorkTotal, byId } from '../logic/costing'
 import { buildLotPdf } from '../logic/lotPdf'
@@ -92,7 +92,7 @@ export default function LotReport() {
           <Card className="p-4 space-y-2">
             <FieldLabel>📤 Raw material sent</FieldLabel>
             <Row label="Compound (PP)" val={`${fmtNum(r.sent.compoundKg)} kg`} sub={`@ ₹${fmtNum(r.sent.cmpRate)}/kg`} />
-            {r.sent.nutsSent > 0 && <Row label="Nuts" val={fmtPcsKg(r.sent.nutsSent, r.nutWeightG)} sub={`@ ₹${fmtNum(r.sent.nutRate)}`} />}
+            {r.sent.nutsSent > 0 && <Row label="Nuts" val={fmtCountKg(r.sent.nutsSent, r.nutsSentKg)} sub={`@ ₹${fmtNum(r.sent.nutRate)}`} />}
             {r.sent.mbKg > 0 && <Row label="Masterbatch" val={`${fmtNum(r.sent.mbKg)} kg`} />}
           </Card>
 
@@ -124,7 +124,7 @@ export default function LotReport() {
             <Row label="Runner returned" val={`${fmtNum(r.received.runnerKg)} kg`} />
             <Row label="Rejects returned" val={`${fmtNum(r.received.rejectsKg)} kg`} />
             <Row label="Burnt / purge loss" val={`${fmtNum(r.received.burntKg)} kg`} />
-            <Row label="Loose nuts returned" val={fmtPcsKg(r.returned.nuts, r.nutWeightG)} />
+            <Row label="Loose nuts returned" val={fmtCountKg(r.returned.nuts, r.returnedNutsKg)} />
             <Row label="Finished weight (weighed)" val={`${fmtNum(r.received.finishedKg)} kg`} />
             {r.efficiency && (
               <div className={`text-sm rounded-xl px-3 py-2 mt-1 ${r.efficiency.pct != null && r.efficiency.pct < 85 ? 'bg-amber/10 text-amber' : 'bg-graphite text-muted'}`}>
@@ -142,7 +142,7 @@ export default function LotReport() {
             <Row label="Unaccounted / with molder" val={`${fmtNum(r.balanceKg)} kg`} strong />
             <Row label="Material loss" val={`${fmtNum(r.lossPct)} %`} />
             <Row label="Recoverable regrind" val={`${fmtNum(r.regrindKg)} kg`} />
-            <Row label="Nut balance" val={fmtPcsKg(r.nutBalance, r.nutWeightG)} />
+            <Row label="Nut balance" val={fmtCountKg(r.nutBalance, r.nutBalanceKg)} />
             {r.flag && <div className="text-xs font-semibold text-signal-red">🚩 More plastic came out than was sent — re-check weights/pieces.</div>}
           </Card>
 

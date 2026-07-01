@@ -10,12 +10,11 @@
 import { useMemo } from 'react'
 import { usePlastic } from '../PlasticContext'
 import { Card, FieldLabel } from '../../../core/ui'
-import { daysAgoStr, fmtNum, fmtPcsKg } from '../../../core/utils/format'
+import { daysAgoStr, fmtNum, fmtPcsKg, fmtCountKg } from '../../../core/utils/format'
 import { rejectReasonLabel } from '../config'
 
 export default function Dashboard() {
-  const { production, issues, returns, products, masters } = usePlastic()
-  const nutG = masters?.inserts?.[0]?.weightG || 0  // nut weight for "nuts (kg)" display
+  const { production, issues, returns, products } = usePlastic()
 
   // Last 15 days — raw material in/out and final product (pieces only).
   const since15 = daysAgoStr(15)
@@ -27,12 +26,14 @@ export default function Dashboard() {
       compoundKg: iss.reduce((s, i) => s + (Number(i.compoundKg) || 0), 0),
       mbKg: iss.reduce((s, i) => s + (Number(i.mbKg) || 0), 0),
       nuts: iss.reduce((s, i) => s + (Number(i.nutQty) || 0), 0),
+      nutsKg: iss.reduce((s, i) => s + (Number(i.nutKg) || 0), 0),
     }
     const rawIn = {
       regrindKg: prod.reduce((s, e) => s + (Number(e.runnerKg) || 0) + (Number(e.rejectsKg) || 0), 0),
       burntKg: prod.reduce((s, e) => s + (Number(e.burntKg) || 0), 0),
       returnedKg: ret.reduce((s, r) => s + (Number(r.compoundKg) || 0) + (Number(r.regrindKg) || 0), 0),
       returnedNuts: ret.reduce((s, r) => s + (Number(r.nutQty) || 0), 0),
+      returnedNutsKg: ret.reduce((s, r) => s + (Number(r.nutKg) || 0), 0),
     }
     const prodMap = {}
     for (const e of prod) for (const it of (e.items || [])) {
@@ -106,12 +107,12 @@ export default function Dashboard() {
           <div className="text-xs font-bold text-muted uppercase mt-1">Sent to molders (OUT)</div>
           <Row label="Compound" val={`${fmtNum(last15.rawOut.compoundKg)} kg`} />
           <Row label="Masterbatch" val={`${fmtNum(last15.rawOut.mbKg)} kg`} />
-          <Row label="Nuts" val={fmtPcsKg(last15.rawOut.nuts, nutG)} />
+          <Row label="Nuts" val={fmtCountKg(last15.rawOut.nuts, last15.rawOut.nutsKg)} />
           <div className="text-xs font-bold text-muted uppercase mt-2">Returned (IN)</div>
           <Row label="Regrind (runner + rejects)" val={`${fmtNum(last15.rawIn.regrindKg)} kg`} />
           <Row label="Burnt loss" val={`${fmtNum(last15.rawIn.burntKg)} kg`} />
           <Row label="Returned by molder (compound + regrind)" val={`${fmtNum(last15.rawIn.returnedKg)} kg`} />
-          <Row label="Nuts returned" val={fmtPcsKg(last15.rawIn.returnedNuts, nutG)} />
+          <Row label="Nuts returned" val={fmtCountKg(last15.rawIn.returnedNuts, last15.rawIn.returnedNutsKg)} />
         </div>
       </Card>
 
