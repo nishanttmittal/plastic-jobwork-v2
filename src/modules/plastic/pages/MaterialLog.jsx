@@ -6,7 +6,7 @@
 import { useMemo } from 'react'
 import { usePlastic } from '../PlasticContext'
 import { Card, FieldLabel } from '../../../core/ui'
-import { fmtDate, fmtNum } from '../../../core/utils/format'
+import { fmtDate, fmtNum, fmtPcsKg } from '../../../core/utils/format'
 import { byId } from '../logic/costing'
 
 const sinceStr = () => new Date(Date.now() - 15 * 86400000).toISOString().slice(0, 10)
@@ -17,6 +17,8 @@ export default function MaterialLog() {
   const since = sinceStr()
   const mName = (id) => byId(molders, id)?.name || '(moulder)'
   const pName = (id) => byId(masters.products, id)?.name || 'product'
+  const nutG = (e) => byId(masters.inserts, e.insertId)?.weightG || masters.inserts?.[0]?.weightG || 0
+  const pieceG = (id) => byId(masters.products, id)?.finishedPieceG || 0
 
   const { sent, received } = useMemo(() => {
     const act = (rows) => (rows || []).filter(r => !r.voided && (r.date || '') >= since)
@@ -24,14 +26,14 @@ export default function MaterialLog() {
       const bits = []
       if (num(i.compoundKg) > 0) bits.push(`${fmtNum(i.compoundKg)} kg compound`)
       if (num(i.mbKg) > 0) bits.push(`${fmtNum(i.mbKg)} kg MB`)
-      if (num(i.nutKg) > 0 || num(i.nutQty) > 0) bits.push(`${fmtNum(i.nutKg)} kg nuts (${fmtNum(i.nutQty)})`)
+      if (num(i.nutKg) > 0 || num(i.nutQty) > 0) bits.push(`${fmtPcsKg(i.nutQty, nutG(i))} nuts`)
       return { id: i.id, date: i.date, molder: mName(i.molderId), lot: i.lotNo || '', text: bits.join(' · ') || 'issue' }
     }).sort((a, b) => (a.date < b.date ? 1 : -1))
 
     const received = []
     for (const p of act(production.list)) {
       const pcs = (p.items || []).reduce((s, it) => s + num(it.pieces), 0)
-      const names = (p.items || []).map(it => `${fmtNum(it.pieces)} ${pName(it.productId)}`).join(', ')
+      const names = (p.items || []).map(it => `${fmtPcsKg(it.pieces, pieceG(it.productId))} ${pName(it.productId)}`).join(', ')
       received.push({ id: p.id, date: p.date, molder: mName(p.molderId), lot: p.lotNo || '',
         text: `${names || fmtNum(pcs) + ' pcs'}${num(p.finishedKg) > 0 ? ` · ${fmtNum(p.finishedKg)} kg` : ''}`, kind: 'goods' })
     }
@@ -39,7 +41,7 @@ export default function MaterialLog() {
       const bits = []
       if (num(r.compoundKg) > 0) bits.push(`${fmtNum(r.compoundKg)} kg compound`)
       if (num(r.regrindKg) > 0) bits.push(`${fmtNum(r.regrindKg)} kg regrind`)
-      if (num(r.nutKg) > 0 || num(r.nutQty) > 0) bits.push(`${fmtNum(r.nutKg)} kg nuts (${fmtNum(r.nutQty)})`)
+      if (num(r.nutKg) > 0 || num(r.nutQty) > 0) bits.push(`${fmtPcsKg(r.nutQty, nutG(r))} nuts`)
       received.push({ id: r.id, date: r.date, molder: mName(r.molderId), lot: r.lotNo || '',
         text: bits.join(' · ') || 'return', kind: 'back' })
     }

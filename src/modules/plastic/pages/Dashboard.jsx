@@ -10,11 +10,12 @@
 import { useMemo } from 'react'
 import { usePlastic } from '../PlasticContext'
 import { Card, FieldLabel } from '../../../core/ui'
-import { daysAgoStr, fmtNum } from '../../../core/utils/format'
+import { daysAgoStr, fmtNum, fmtPcsKg } from '../../../core/utils/format'
 import { rejectReasonLabel } from '../config'
 
 export default function Dashboard() {
-  const { production, issues, returns, products } = usePlastic()
+  const { production, issues, returns, products, masters } = usePlastic()
+  const nutG = masters?.inserts?.[0]?.weightG || 0  // nut weight for "nuts (kg)" display
 
   // Last 15 days — raw material in/out and final product (pieces only).
   const since15 = daysAgoStr(15)
@@ -105,12 +106,12 @@ export default function Dashboard() {
           <div className="text-xs font-bold text-muted uppercase mt-1">Sent to molders (OUT)</div>
           <Row label="Compound" val={`${fmtNum(last15.rawOut.compoundKg)} kg`} />
           <Row label="Masterbatch" val={`${fmtNum(last15.rawOut.mbKg)} kg`} />
-          <Row label="Nuts" val={fmtNum(last15.rawOut.nuts)} />
+          <Row label="Nuts" val={fmtPcsKg(last15.rawOut.nuts, nutG)} />
           <div className="text-xs font-bold text-muted uppercase mt-2">Returned (IN)</div>
           <Row label="Regrind (runner + rejects)" val={`${fmtNum(last15.rawIn.regrindKg)} kg`} />
           <Row label="Burnt loss" val={`${fmtNum(last15.rawIn.burntKg)} kg`} />
           <Row label="Returned by molder (compound + regrind)" val={`${fmtNum(last15.rawIn.returnedKg)} kg`} />
-          <Row label="Nuts returned" val={fmtNum(last15.rawIn.returnedNuts)} />
+          <Row label="Nuts returned" val={fmtPcsKg(last15.rawIn.returnedNuts, nutG)} />
         </div>
       </Card>
 
@@ -120,7 +121,7 @@ export default function Dashboard() {
         <div className="mt-2 text-sm space-y-1">
           {Object.keys(last15.prodMap).length === 0 && <p className="text-muted">No production in the last 15 days.</p>}
           {products.filter(p => last15.prodMap[p.id]).map(p => (
-            <Row key={p.id} label={p.name} val={`${fmtNum(last15.prodMap[p.id])} pcs`} />
+            <Row key={p.id} label={p.name} val={`${fmtPcsKg(last15.prodMap[p.id], p.finishedPieceG)} pcs`} />
           ))}
         </div>
       </Card>
