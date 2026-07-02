@@ -7,7 +7,7 @@
  * singleton docs ({ list:[...] }); entry numbers come from an atomic counter.
  */
 import { useEffect, useState, useCallback, useMemo } from 'react'
-import { onSnapshot, setDoc, deleteDoc, getDocs, writeBatch } from 'firebase/firestore'
+import { onSnapshot, setDoc, deleteDoc, getDocs, writeBatch, query, orderBy, limit } from 'firebase/firestore'
 import { db, paths, ensureSignedIn, reserveChallanNumber } from '../../core/db/firebase'
 import { makeNormalizer } from '../../core/schema/field'
 import { makeId } from '../../core/db/repository'
@@ -66,7 +66,10 @@ export function FirestoreProvider({ children }) {
         unsubs.push(onSnapshot(paths.payments(),
           (s) => setPaymentsList(s.docs.map(d => normPay({ id: d.id, ...d.data() }))),
           () => setPaymentsList([])))
-        unsubs.push(onSnapshot(paths.logs(), (s) => setLogsList(s.docs.map(d => ({ id: d.id, ...d.data() })))))
+        // logs grow forever but are only used for a recent-activity view; cap the
+        // read at the newest 500 so history size never inflates the read count.
+        unsubs.push(onSnapshot(query(paths.logs(), orderBy('ts', 'desc'), limit(500)),
+          (s) => setLogsList(s.docs.map(d => ({ id: d.id, ...d.data() })))))
         unsubs.push(onSnapshot(paths.users(), (s) => setUsersList(s.docs.map(d => normUser({ id: d.id, ...d.data() })))))
         unsubs.push(onSnapshot(paths.compounds(), (s) => metaList(s, setCompoundsState)))
         unsubs.push(onSnapshot(paths.masterbatch(), (s) => metaList(s, setMasterbatchState)))

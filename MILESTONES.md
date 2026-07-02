@@ -31,8 +31,16 @@ pieces derived; **costing/pay use pieces**. Production app on live shared Firest
 - **Server-side enforcement of lot locks + per-field validation** = the planned "Security Phase" before
   external contractors get access. Roles ARE enforced at the collection level (owner vs manager); field
   and lock enforcement are client-side today.
-- **Firestore read scaling**: the provider live-subscribes to all collections; fine at current size,
-  planned improvement is date-limited/paginated queries as data grows (ties to free-tier quota).
+- **Firestore read scaling** (actively being addressed):
+  - Persistent local cache IS enabled (`persistentLocalCache` + multi-tab) → repeat opens serve from
+    cache and sync only deltas; it is NOT "read all history on every open".
+  - **`logs` subscription now capped** at the newest 500 (`orderBy ts desc, limit 500`) — it grows
+    fastest and is only used for a recent-activity view.
+  - **Transaction collections (`production`/`issues`/`returns`) are deliberately NOT date-windowed**,
+    because all-time reconciliation, stock (Σ purchases−issues+returns), and moulder hisab need full
+    history — naive windowing would corrupt those totals. The correct scaling fix is **derived monthly
+    summary docs** (see below) so Home/reports read a summary instead of scanning history; that is a
+    planned architecture step, not done yet.
 - **Costing rate source**: costing uses product master rates; stock tracks purchase lot prices. A future
   UI could let the owner choose master/latest/average.
 
