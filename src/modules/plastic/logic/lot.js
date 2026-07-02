@@ -157,6 +157,11 @@ export function lotReconciliation(lotNo, masters, data) {
   const rateFullLoss = round2(compoundFullLoss + nutPerPiece + jobWorkPerPiece)
   const rateRegrind = round2(compoundNet + nutPerPiece + jobWorkPerPiece)
 
+  // Nut weight can differ lot to lot: prefer the actual weighed kg on the issues
+  // (avg g/nut), fall back to the master weight for lots with no per-entry kg.
+  const masterNutG = num(byId(masters.inserts, insertId)?.weightG)
+  const avgNutG = nutsSent > 0 && nutsSentKg > 0 ? (nutsSentKg * 1000) / nutsSent : masterNutG
+
   return {
     lotNo, molder, molderId, compoundName, firstDate: issues[0]?.date || prod[0]?.date || '',
     hasData: issues.length + prod.length + rets.length > 0,
@@ -164,13 +169,12 @@ export function lotReconciliation(lotNo, masters, data) {
     // finished-piece weight for produced pieces; nut movements use the ACTUAL
     // weighed kg (nut size differs lot to lot), with a per-lot average g/nut for
     // the residual balance. Falls back to the master weight when a lot pre-dates
-    // per-entry nut weights.
+    // per-entry nut weights (keeps lot-level consistent with the per-entry views).
     pieceG: num(lotProduct?.finishedPieceG),
-    nutWeightG: num(byId(masters.inserts, insertId)?.weightG),
-    nutsSentKg,
-    returnedNutsKg,
-    nutBalanceKg: round2(((nutsSent - nutsUsed - returnedNuts) *
-      (nutsSent > 0 && nutsSentKg > 0 ? (nutsSentKg * 1000) / nutsSent : num(byId(masters.inserts, insertId)?.weightG))) / 1000),
+    nutWeightG: masterNutG,
+    nutsSentKg: nutsSentKg > 0 ? nutsSentKg : round2((nutsSent * masterNutG) / 1000),
+    returnedNutsKg: returnedNutsKg > 0 ? returnedNutsKg : round2((returnedNuts * masterNutG) / 1000),
+    nutBalanceKg: round2(((nutsSent - nutsUsed - returnedNuts) * avgNutG) / 1000),
     sent: { compoundKg, nutsSent, mbKg, cmpRate, nutRate },
     received: { goodPieces, rejectPieces, runnerKg, rejectsKg, burntKg, finishedKg, plasticInProductsKg, nutsUsed, shifts, hoursRun, machineShots, machinePieces },
     efficiency,

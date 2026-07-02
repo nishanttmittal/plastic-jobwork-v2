@@ -46,7 +46,10 @@ export default function ReturnMaterial() {
   const save = () => {
     if (!canSave) { show('Enter a quantity returned', 2500); return }
     if (isLotFinalized(lotNo, lotLocks)) { show('🔒 That lot is finalized — reopen it first', 3000); return }
+    if ((Number(compoundKg) || 0) < 0 || (Number(regrindKg) || 0) < 0 || (Number(nutKg) || 0) < 0) { show('Quantities cannot be negative', 3000); return }
     if (insertId && !(nutWeightG > 0)) { show("Set this nut's weight (g each) in Masters → Nuts first", 3500); return }
+    if (insertId && nutWtG !== '' && !(Number(nutWtG) > 0)) { show('Enter a valid nut weight (g each), or leave it blank to use the standard', 3500); return }
+    if (Number(nutWtG) > 100) { show('Nut weight looks too high (expected ~1–50 g each) — please check', 3500); return }
     if (insertId && !(Number(nutKg) > 0)) { show('⚖️ Nut weight (kg) is required when nuts come back', 3000); return }
     returns.insert({
       date, molderId, lotNo,

@@ -69,6 +69,47 @@ describe('molderBalance nut weight (per-lot weighed kg)', () => {
   })
 })
 
+describe('backward compatibility — nut weight (legacy + partial records)', () => {
+  // LEGACY: an old lot with a nut COUNT but no nutKg (pre-weight-tracking).
+  // Must fall back to the master weight so kg is still shown consistently.
+  it('legacy issue (count only, no nutKg) → nutsSentKg from master weight', () => {
+    const d = { issues: [{ lotNo: 'OLD-01', molderId: 'mld_1', productId: 'prd_cap', insertId: 'nut_a', nutQty: 10000 }], production: [], returns: [] }
+    const r = lotReconciliation('OLD-01', masters, d)
+    expect(r.sent.nutsSent).toBe(10000)
+    expect(r.nutsSentKg).toBeCloseTo(83, 0)   // 10000 × 8.3 g
+  })
+  it('new issue (kg only, count derived at entry) → uses true weighed kg', () => {
+    const d = { issues: [{ lotNo: 'NEW-01', molderId: 'mld_1', productId: 'prd_cap', insertId: 'nut_a', nutKg: 90, nutQty: 10000 }], production: [], returns: [] }
+    const r = lotReconciliation('NEW-01', masters, d)
+    expect(r.nutsSentKg).toBe(90)             // heavier lot: 9 g/nut, NOT master 8.3
+  })
+  it('zero return + fractional kg reconcile cleanly', () => {
+    const d = {
+      issues: [{ lotNo: 'F-01', molderId: 'mld_1', productId: 'prd_cap', insertId: 'nut_a', nutKg: 12.345, nutQty: 1487 }],
+      production: [{ lotNo: 'F-01', molderId: 'mld_1', items: [{ productId: 'prd_cap', pieces: 1000, rejects: 0 }] }],
+      returns: [],
+    }
+    const r = lotReconciliation('F-01', masters, d)
+    expect(r.returned.nuts).toBe(0)
+    expect(r.nutsSentKg).toBe(12.35)          // rounded to 2 dp (consistent kg rounding)
+    expect(r.nutBalance).toBe(487)            // 1487 − 1000 used − 0 returned
+  })
+})
+
+describe('full scenario — Issue → Return → Reconcile (numbers hold end-to-end)', () => {
+  const r = lotReconciliation('KUPPA-01', masters, data)
+  const b = molderBalance('mld_1', { issues: data.issues, production: data.production, returns: data.returns, products: masters.products })
+  it('sent/used/returned/balance all consistent', () => {
+    expect(r.sent.nutsSent).toBe(18072)
+    expect(r.received.goodPieces).toBe(11928)
+    expect(r.returned.nuts).toBe(5548)
+    expect(r.nutBalance).toBe(596)                 // 18072 − 11928 − 5548
+    expect(b.nutBalance).toBe(r.nutBalance)         // lot view agrees with molder view
+    expect(r.nutsSentKg).toBe(150)
+    expect(fmtCountKg(r.sent.nutsSent, r.nutsSentKg)).toBe('18,072 (150 kg)')
+  })
+})
+
 describe('weight-in-brackets formatters (owner rule 2026-07-01)', () => {
   it('fmtCountKg nuts by true kg: 18,072 / 150 kg → "18,072 (150 kg)"', () => expect(fmtCountKg(18072, 150)).toBe('18,072 (150 kg)'))
   it('fmtCountKg small: 596 / 4.95 kg → "596 (4.95 kg)"', () => expect(fmtCountKg(596, 4.95)).toBe('596 (4.95 kg)'))
