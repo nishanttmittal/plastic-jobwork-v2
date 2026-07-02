@@ -15,6 +15,7 @@ import { usePlastic } from '../PlasticContext'
 import { Card, FieldLabel, Select, Button, DateInput, NumberInput } from '../../../core/ui'
 import { fmtDate, fmtNum, fmtPcsKg, fmtCountKg } from '../../../core/utils/format'
 import { byId } from '../logic/costing'
+import { nutCountFromKg } from '../logic/reconcile'
 import { isLotFinalized } from '../logic/lot'
 
 const TYPE_META = {
@@ -25,15 +26,17 @@ const TYPE_META = {
 
 // Which numeric fields are editable per entry type (date is always editable).
 const QTY_FIELDS = {
+  // Nuts are edited BY WEIGHT (kg) — the source of truth — and the piece count is
+  // recomputed on save. Editing the count directly would desync it from the kg.
   issue:  [
     { name: 'compoundKg', label: 'Compound (kg)' },
     { name: 'mbKg',       label: 'Masterbatch (kg)' },
-    { name: 'nutQty',     label: 'Nuts (pcs)' },
+    { name: 'nutKg',      label: 'Nuts (kg)' },
   ],
   return: [
     { name: 'compoundKg', label: 'Compound (kg)' },
     { name: 'regrindKg',  label: 'Regrind (kg)' },
-    { name: 'nutQty',     label: 'Nuts (pcs)' },
+    { name: 'nutKg',      label: 'Nuts (kg)' },
   ],
   production: [], // date only — see file header
 }
@@ -116,6 +119,13 @@ export default function Entries({ owner }) {
       const prev = Number(r.raw[f.name]) || 0
       patch[f.name] = next
       if (next !== prev) changes.push(`${f.label} ${fmtNum(prev)}→${fmtNum(next)}`)
+    }
+    // Nut weight edited → recompute the derived count from kg ÷ this entry's
+    // g/nut (its own nutWeightG, else the master), so count never drifts from kg.
+    if (Object.prototype.hasOwnProperty.call(patch, 'nutKg')) {
+      const gPerNut = Number(r.raw.nutWeightG) > 0 ? Number(r.raw.nutWeightG)
+        : (byId(masters.inserts, r.raw.insertId)?.weightG || masters.inserts?.[0]?.weightG || 0)
+      patch.nutQty = nutCountFromKg(patch.nutKg, gPerNut)
     }
     if (changes.length === 0) { setEditRow(null); return } // nothing changed
     patch.editedAt = new Date().toISOString()

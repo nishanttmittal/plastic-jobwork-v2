@@ -30,7 +30,9 @@ export default function Admin() {
     )
   }
 
-  const backup = () => {
+  // Download a JSON snapshot of ALL current data. `tag` distinguishes a manual
+  // backup from the automatic safety copy taken right before a restore/reset.
+  const backup = (tag = 'backup') => {
     const blob = {
       app: 'plastic-jobwork', exportedAt: new Date().toISOString(),
       production: production.list, issues: issues.list, returns: returns.list, purchases: purchases.list, payments: payments.list,
@@ -38,18 +40,24 @@ export default function Admin() {
     }
     const url = URL.createObjectURL(new Blob([JSON.stringify(blob, null, 2)], { type: 'application/json' }))
     const a = document.createElement('a')
-    a.href = url; a.download = `plastic-backup-${new Date().toISOString().slice(0, 10)}.json`; a.click()
+    a.href = url; a.download = `plastic-${tag}-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.json`; a.click()
     URL.revokeObjectURL(url)
-    log('BACKUP', 'Downloaded JSON backup', 'admin')
+    log('BACKUP', `Downloaded JSON ${tag}`, 'admin')
   }
 
   const restore = (e) => {
     const file = e.target.files?.[0]; if (!file) return
+    const input = e.target
     const reader = new FileReader()
     reader.onload = () => {
       try {
         const d = JSON.parse(reader.result)
-        if (!confirm('Restore will REPLACE all current data with the backup. Continue?')) return
+        const counts = ['production', 'issues', 'returns', 'purchases', 'payments']
+          .map(k => Array.isArray(d[k]) ? `${d[k].length} ${k}` : null).filter(Boolean).join(', ')
+        const cur = `${production.list.length} production, ${issues.list.length} issues, ${returns.list.length} returns, ${purchases.list.length} purchases, ${payments.list.length} payments`
+        if (!confirm(`Restore will REPLACE ALL current data.\n\nNOW (will be overwritten): ${cur}\nBACKUP FILE: ${counts || 'no records found'}\n\nA safety copy of the CURRENT data will download first. Continue?`)) { input.value = ''; return }
+        if (prompt('This overwrites live data. Type RESTORE to confirm:') !== 'RESTORE') { alert('Cancelled — nothing changed.'); input.value = ''; return }
+        backup('auto-before-restore')   // safety net: current state saved before we overwrite it
         if (Array.isArray(d.production)) production.replaceAll(d.production)
         if (Array.isArray(d.issues)) issues.replaceAll(d.issues)
         if (Array.isArray(d.returns)) returns.replaceAll(d.returns)
@@ -62,9 +70,10 @@ export default function Admin() {
           ctx.setMolders(d.masters.molders || [])
           ctx.setProducts(d.masters.products || [])
         }
-        log('RESTORE', `Restored from ${file.name}`, 'admin')
-        alert('✅ Restored. Refresh if anything looks stale.')
+        log('RESTORE', `Restored from ${file.name} (${counts})`, 'admin')
+        alert('✅ Restored. A pre-restore safety backup was also downloaded. Refresh if anything looks stale.')
       } catch { alert('Invalid backup file') }
+      input.value = ''
     }
     reader.readAsText(file)
   }
@@ -78,10 +87,12 @@ export default function Admin() {
   }
 
   const resetAll = () => {
-    if (!confirm('⚠️ This clears ALL production, issues, returns, purchases and payments (masters kept). Sure?')) return
-    if (!confirm('This cannot be undone. Confirm again.')) return
+    const cur = `${production.list.length} production, ${issues.list.length} issues, ${returns.list.length} returns, ${purchases.list.length} purchases, ${payments.list.length} payments`
+    if (!confirm(`⚠️ This CLEARS ALL transactions (masters kept):\n${cur}\n\nA safety backup will download first. Continue?`)) return
+    if (prompt('This cannot be undone. Type CLEAR to confirm:') !== 'CLEAR') { alert('Cancelled — nothing changed.'); return }
+    backup('auto-before-reset')   // safety net before wiping
     production.replaceAll([]); issues.replaceAll([]); returns.replaceAll([]); purchases.replaceAll([]); payments.replaceAll([])
-    log('RESET', 'Cleared all transactions', 'admin')
+    log('RESET', `Cleared all transactions (was: ${cur})`, 'admin')
   }
 
   const recent = [...production.list].sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)).slice(0, 10)
@@ -91,7 +102,7 @@ export default function Admin() {
     <div className="max-w-lg mx-auto p-4 space-y-4">
       <Card className="p-4 space-y-3">
         <FieldLabel>Backup & Restore</FieldLabel>
-        <Button className="w-full" onClick={backup}>⬇️ Download backup (JSON)</Button>
+        <Button className="w-full" onClick={() => backup()}>⬇️ Download backup (JSON)</Button>
         <label className="block">
           <span className="text-sm text-muted">Restore from backup</span>
           <input type="file" accept="application/json" onChange={restore} className="mt-1 w-full text-sm text-muted" />
@@ -148,8 +159,16 @@ function Users() {
     const e = email.trim().toLowerCase()
     if (!e || !e.includes('@')) return
     // doc id = email so the security rules can resolve the role directly.
-    users.insert({ id: e, email: e, name: name.trim(), role, active: true })
-    log('USER_ADD', `${e} as ${role}`, 'admin')
+    // Upsert: re-adding an existing email updates their role/name instead of
+    // creating a duplicate (and re-activates them).
+    const existing = users.list.find(u => u.id === e)
+    if (existing) {
+      users.update(e, { email: e, name: name.trim(), role, active: true })
+      log('USER_UPDATE', `${e} → ${role}`, 'admin')
+    } else {
+      users.insert({ id: e, email: e, name: name.trim(), role, active: true })
+      log('USER_ADD', `${e} as ${role}`, 'admin')
+    }
     setEmail(''); setName('')
   }
   const toggle = (u) => { users.update(u.id, { active: !(u.active !== false) }); log('USER_TOGGLE', `${u.email} → ${u.active !== false ? 'disabled' : 'active'}`, 'admin') }

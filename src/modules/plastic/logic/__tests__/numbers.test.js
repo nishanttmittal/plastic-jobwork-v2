@@ -5,7 +5,7 @@
  */
 import { describe, it, expect } from 'vitest'
 import { productMaterialCost, jobWorkTotal } from '../costing'
-import { netPlasticPerPieceG, nutsPerPiece } from '../reconcile'
+import { netPlasticPerPieceG, nutsPerPiece, nutCountFromKg } from '../reconcile'
 import { lotReconciliation } from '../lot'
 import { materialStock } from '../stock'
 import { molderBalance } from '../reconcile'
@@ -134,6 +134,24 @@ describe('full scenario — Issue → Return → Reconcile (numbers hold end-to-
     expect(b.nutBalance).toBe(r.nutBalance)         // lot view agrees with molder view
     expect(r.nutsSentKg).toBe(150)
     expect(fmtCountKg(r.sent.nutsSent, r.nutsSentKg)).toBe('18,072 (150 kg)')
+  })
+})
+
+describe('editing nuts by weight keeps count in sync (Entries edit — GPT P1)', () => {
+  // Editing an entry's nut kg must recompute the count from the entry's own g/nut,
+  // so the displayed "count (kg)" stays consistent (no drift).
+  it('re-derives count from edited kg using the entry weight (9 g lot)', () => {
+    expect(nutCountFromKg(90, 9)).toBe(10000)        // heavier lot, its own weight
+    expect(nutCountFromKg(150, 8.3)).toBe(18072)     // standard lot
+  })
+  it('display stays consistent after an edit: fmtCountKg(newQty, newKg)', () => {
+    const newKg = 120, gPerNut = 8.3
+    const newQty = nutCountFromKg(newKg, gPerNut)     // 14458
+    expect(fmtCountKg(newQty, newKg)).toBe('14,458 (120 kg)')
+  })
+  it('missing weight → 0 (safe, no NaN)', () => {
+    expect(nutCountFromKg(150, 0)).toBe(0)
+    expect(nutCountFromKg(0, 8.3)).toBe(0)
   })
 })
 

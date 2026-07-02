@@ -15,6 +15,15 @@
 import { byId, round2 } from './costing'
 import { RECON_TOLERANCE_KG } from '../config'
 
+/**
+ * Nut COUNT from weight — weight (kg) is the source of truth because nut size
+ * differs lot to lot. The canonical conversion used at entry AND when editing.
+ * gPerNut = the entry's own nutWeightG, else the nut master weight. Returns 0
+ * when either input is missing (safe).
+ */
+export const nutCountFromKg = (nutKg, gPerNut) =>
+  (Number(nutKg) > 0 && Number(gPerNut) > 0) ? Math.round((Number(nutKg) * 1000) / Number(gPerNut)) : 0
+
 /** Total nuts a product uses per piece (sum across its inserts). */
 export function nutsPerPiece(product) {
   if (!product) return 0

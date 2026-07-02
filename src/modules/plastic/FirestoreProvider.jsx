@@ -57,9 +57,12 @@ export function FirestoreProvider({ children }) {
           (e) => { done = true; clearTimeout(timer); setError(e.message); setReady(true) }))
         unsubs.push(onSnapshot(paths.issues(), (s) => setIssuesList(s.docs.map(d => normIssue({ id: d.id, ...d.data() })))))
         unsubs.push(onSnapshot(paths.returns(), (s) => setReturnsList(s.docs.map(d => normReturn({ id: d.id, ...d.data() })))))
-        unsubs.push(onSnapshot(paths.purchases(), (s) => setPurchasesList(s.docs.map(d => normPurchase({ id: d.id, ...d.data() })))))
-        // payments are owner-only in the rules; a manager's read is denied —
-        // swallow that error so the console stays clean and money stays empty.
+        // purchases + payments are owner-only in the rules; a manager's read is
+        // denied — swallow that error so the console stays clean and the list
+        // stays empty (managers don't see Stock/money anyway).
+        unsubs.push(onSnapshot(paths.purchases(),
+          (s) => setPurchasesList(s.docs.map(d => normPurchase({ id: d.id, ...d.data() }))),
+          () => setPurchasesList([])))
         unsubs.push(onSnapshot(paths.payments(),
           (s) => setPaymentsList(s.docs.map(d => normPay({ id: d.id, ...d.data() }))),
           () => setPaymentsList([])))
