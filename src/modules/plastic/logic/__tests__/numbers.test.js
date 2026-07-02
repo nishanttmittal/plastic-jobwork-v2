@@ -96,6 +96,33 @@ describe('backward compatibility — nut weight (legacy + partial records)', () 
   })
 })
 
+describe('multi-issue lot — different nut weights across supplies aggregate correctly', () => {
+  // One lot, TWO issues at DIFFERENT nut weights (8.3 g then 9.0 g) + a return.
+  // The lot must sum the ACTUAL weighed kg, not master × count.
+  const d = {
+    issues: [
+      { lotNo: 'MULTI-01', molderId: 'mld_1', compoundId: 'cmp_pp', compoundKg: 250, productId: 'prd_cap', insertId: 'nut_a', nutKg: 100, nutQty: 12048 }, // 8.3 g
+      { lotNo: 'MULTI-01', molderId: 'mld_1', compoundId: 'cmp_pp', compoundKg: 150, productId: 'prd_cap', insertId: 'nut_a', nutKg: 45, nutQty: 5000 },   // 9.0 g
+    ],
+    production: [{ lotNo: 'MULTI-01', molderId: 'mld_1', items: [{ productId: 'prd_cap', pieces: 10000, rejects: 0 }] }],
+    returns: [{ lotNo: 'MULTI-01', molderId: 'mld_1', insertId: 'nut_a', nutKg: 18, nutQty: 2000 }],
+  }
+  const r = lotReconciliation('MULTI-01', masters, d)
+  it('sums the true weighed kg (145), not master × count (141.5)', () => {
+    expect(r.sent.nutsSent).toBe(17048)
+    expect(r.nutsSentKg).toBe(145)
+    expect(r.returned.nuts).toBe(2000)
+    expect(r.returnedNutsKg).toBe(18)
+  })
+  it('nut balance + kg use the weighted avg (8.51 g), not master 8.3', () => {
+    expect(r.nutBalance).toBe(5048)                 // 17048 − 10000 used − 2000 returned
+    expect(r.nutBalanceKg).toBeCloseTo(42.9, 0)     // weighted avg (~8.51 g), not 41.9 at master 8.3
+  })
+  it('compound still reconciles without a false over-consumption flag', () => {
+    expect(r.flag).toBe(false)
+  })
+})
+
 describe('full scenario — Issue → Return → Reconcile (numbers hold end-to-end)', () => {
   const r = lotReconciliation('KUPPA-01', masters, data)
   const b = molderBalance('mld_1', { issues: data.issues, production: data.production, returns: data.returns, products: masters.products })
